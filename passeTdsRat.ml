@@ -186,6 +186,7 @@ let analyse_tds_fonction maintds (AstSyntax.Fonction(t,n,lp,li))  =
         let nlp_inner_fun (t,n) = 
           let _ =
             begin 
+              (* On vérifie que la paramètre n'a pas été déclaré précédemment *)
               match chercherLocalement tdsparam n with
               | Some _ -> raise (DoubleDeclaration n)
               | None -> ()  
@@ -198,13 +199,11 @@ let analyse_tds_fonction maintds (AstSyntax.Fonction(t,n,lp,li))  =
       let info = InfoFun (n,t, List.map (fst) nlp) in
       (* Création du pointeur sur l'information *)
       let ia = info_to_info_ast info in
-      (* Ajout dans la table locale *)
-      let _ = ajouter tdsparam n ia in
+      (* Ajout du pointeur dans la TDS (pour la récursivité)*)
+      let _ = ajouter maintds n ia in
       (* Vérification de la bonne utilisation des identifiants dans le bloc d'instructions *)
-      (* et obtention du bloc transformé *) 
+      (* et obtention du bloc transformé *)
       let nli = analyse_tds_bloc tdsparam li in
-      (* Ajout de l'information (pointeur) dans la tds *)
-      ajouter maintds n ia;
       (* Renvoie de la nouvelle fonction où les informations liés 
       à la fonction et ses paramètres ont été ajoutés à la tds*)
       Fonction (t, ia, nlp, nli) 
