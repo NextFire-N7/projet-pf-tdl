@@ -8,7 +8,7 @@ exception ErreurNonDetectee;;
 (* Sans fonction                  *)
 (* ------------------------------ *)
 
-(*
+
 let%test_unit "testAffectation1" = 
   let _ = compiler "../../fichiersRat/src-rat-tds-test/testAffectation1.rat" in ()
 
@@ -159,13 +159,13 @@ let _ = compiler   "../../fichiersRat/src-rat-tam-test/testif2.rat" in ()
 
 let%test_unit "code_factiter" = 
   let _ = compiler   "../../fichiersRat/src-rat-tam-test/factiter.rat" in ()
-*)
+
 
 (* ------------------------------ *)
 (* Avec fonction                  *)
 (* ------------------------------ *)
 
-(*
+
 let%test_unit "testDoubleDeclarationVariable1" = 
   try 
     let _ = compiler "../../fichiersRat/src-rat-tds-test/testDoubleDeclarationVariable1.rat"
@@ -357,4 +357,4 @@ let%test_unit "code_testfuns" =
 let%test_unit "code_complique" = 
   let _ = compiler   "../../fichiersRat/src-rat-tam-test/complique.rat" in ()
 
-*)
+

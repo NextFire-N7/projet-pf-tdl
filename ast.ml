@@ -118,7 +118,7 @@ struct
 type unaire = Numerateur | Denominateur
 
 (* Opérateurs binaires existants dans Rat - résolution de la surcharge *)
-type binaire = Fraction | PlusInt | PlusRat | MultInt | MultRat | EquInt | EquBool | Inf
+type binaire = Fraction | PlusInt | PlusRat | MultInt | MultRat | EquInt | EquBool | InfInt
 
 (* Expressions existantes dans Rat *)
 (* = expression de AstTds *)
