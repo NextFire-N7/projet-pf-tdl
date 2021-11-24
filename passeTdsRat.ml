@@ -35,13 +35,16 @@ let rec analyse_tds_expression tds e =
       end
   | AstSyntax.Ident (name) ->
       begin
+        (* On cherche si l'ident est déjà défini *)
         match chercherGlobalement tds name with
         | None -> raise (IdentifiantNonDeclare name)
         | Some ia ->
+          (* On ne peut pas utiliser une fonction dans ce cas là *)
           begin
             match info_ast_to_info ia with
+            | InfoVar _ -> Ident(ia)
+            | InfoConst (_, valeur) -> Entier valeur
             | InfoFun _ -> raise (MauvaiseUtilisationIdentifiant name)
-            | _ -> Ident(ia)
           end
       end
   | AstSyntax.Booleen (value) -> Booleen(value)
