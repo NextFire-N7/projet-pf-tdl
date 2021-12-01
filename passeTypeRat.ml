@@ -93,7 +93,9 @@ module PasseTypeRat :
 
   let analyse_type_fonction (AstTds.Fonction (t, ia, lp, li)) =
     let _ = List.map (fun (t, ia) -> modifier_type_info t ia) lp in
+    let ltp = List.map fst lp in
     let liap = List.map snd lp in
+    modifier_type_fonction_info t ltp ia;
     let nli = analyse_type_bloc (Some t) li in
     Fonction (ia, liap, nli)
 

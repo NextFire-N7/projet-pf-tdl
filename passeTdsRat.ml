@@ -196,7 +196,7 @@ let analyse_tds_fonction maintds (AstSyntax.Fonction(t,n,lp,li))  =
           ajouter tdsparam n astvar; (t,astvar)
         in List.map nlp_inner_fun lp in
       (* Création de l'information associée à l'identfiant *)
-      let info = InfoFun (n,t, List.map (fst) nlp) in
+      let info = InfoFun (n, Undefined, List.map (fst) nlp) in
       (* Création du pointeur sur l'information *)
       let ia = info_to_info_ast info in
       (* Ajout du pointeur dans la TDS (pour la récursivité)*)
