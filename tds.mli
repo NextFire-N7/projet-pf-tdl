@@ -65,3 +65,4 @@ val modifier_adresse_info : int -> string -> info_ast -> unit
 val get_type: info_ast -> typ
 val get_type_retour: info_ast -> typ
 val get_types_params: info_ast -> typ list
+val get_nom: info_ast -> string

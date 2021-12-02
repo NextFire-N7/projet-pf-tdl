@@ -365,4 +365,9 @@ let%test _ =
     | InfoFun (_, _, t) -> t
     | _ -> failwith "Appel get_type_param pas sur un InfoFun"
 
-  
+  let get_nom ia =
+    let i = info_ast_to_info ia in
+    match i with
+    | InfoFun(n,_,_) -> n
+    | InfoVar(n,_,_,_) -> n
+    | InfoConst(n,_) -> n
