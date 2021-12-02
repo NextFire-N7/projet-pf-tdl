@@ -364,3 +364,5 @@ let%test _ =
     match i with
     | InfoFun (_, _, t) -> t
     | _ -> failwith "Appel get_type_param pas sur un InfoFun"
+
+  
