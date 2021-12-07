@@ -42,7 +42,7 @@ let test fichier fonction (var,occ) (dep,registre) =
 
 (**** sans fonctions ****)
 
-let%test "test1_x" = 
+(* let%test "test1_x" = 
   test "../../fichiersRat/src-rat-placement-test/test1.rat"  "main" ("x",1)  (0,"SB")
 
 let%test "test2_x" = 
@@ -220,5 +220,5 @@ let%test "test12_f_r" =
     
 let%test "test12_f_i" = 
   test "../../fichiersRat/src-rat-placement-test/test12.rat"  "f" ("i",1)  (-1, "LB")
-  
+   *)
 

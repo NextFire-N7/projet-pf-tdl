@@ -346,6 +346,13 @@ let%test _ =
   | InfoVar ("x", Rat, 10 , "LB") -> true
   | _ -> false
     
+  let get_nom ia =
+    let i = info_ast_to_info ia in
+    match i with
+    | InfoFun(n,_,_) -> n
+    | InfoVar(n,_,_,_) -> n
+    | InfoConst(n,_) -> n
+
   let get_type ia =
     let i = info_ast_to_info ia in
     match i with
@@ -353,21 +360,29 @@ let%test _ =
     | InfoFun (_,t,_) -> t
     | _ -> failwith "Appel get_type pas sur un InfoVar ou InfoFun"
 
-  let get_type_retour ia =
-    let i = info_ast_to_info ia in
-    match i with
-    | InfoFun (_, t, _) -> t
-    | _ -> failwith "Appel get_type_retour pas sur un InfoFun"
-
   let get_types_params ia =
     let i = info_ast_to_info ia in
     match i with
     | InfoFun (_, _, t) -> t
     | _ -> failwith "Appel get_type_param pas sur un InfoFun"
 
-  let get_nom ia =
+  let get_taille ia =
+    getTaille (get_type ia)
+
+  let get_adresse_var ia =
     let i = info_ast_to_info ia in
     match i with
-    | InfoFun(n,_,_) -> n
-    | InfoVar(n,_,_,_) -> n
-    | InfoConst(n,_) -> n
+    | InfoVar(_,_,d,_) -> d
+    | _ -> failwith "Appel get_adresse_var pas sur un InfoVar"
+
+  let get_registre_var ia =
+    let i = info_ast_to_info ia in
+    match i with
+    | InfoVar(_,_,_,r) -> r
+    | _ -> failwith "Appel get_registre_var pas sur un InfoVar"
+
+  let get_var_data ia =
+    let taille = string_of_int (get_taille ia) in
+    let adresse = string_of_int (get_adresse_var ia) in
+    let registre = get_registre_var ia in
+    (taille, adresse, registre)

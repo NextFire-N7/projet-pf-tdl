@@ -27,7 +27,7 @@ module PasseTypeRat :
         (* Pour chaque paramètre, on récupère le couple (nouvelle expression * type réel) *)
         let nlet = List.map analyse_type_expression le in
         (* On récupère le type de retour de la fonction... *)
-        let tr = get_type_retour ia in
+        let tr = get_type ia in
         (* ... ainsi que le type attendu de ses paramètres *)
         let tpara = get_types_params ia in
         let nle = List.map fst nlet in
