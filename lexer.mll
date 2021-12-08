@@ -58,6 +58,10 @@ rule token = parse
 | "+"          { PLUS }
 | "*"          { MULT }
 | "<"          { INF }
+(* Pointeurs *)
+| "&"          { AND }
+| "new"        { NEW }
+| "null"       { NULL }
 
 (* constantes entières *)
 | ("-")?['0'-'9']+ as i

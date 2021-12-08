@@ -50,11 +50,17 @@ struct
     | Equ -> "= "
     | Inf -> "< "
 
+  let rec string_of_affectable aff =
+    match aff with
+    | Ident n -> n
+    | Deref a -> "*"^(string_of_affectable a)
+  
+
   (* Conversion des expressions *)
   let rec string_of_expression e =
     match e with
     | AppelFonction (n,le) -> "call "^n^"("^((List.fold_right (fun i tq -> (string_of_expression i)^tq) le ""))^") "
-    | Ident n -> n^" "
+    | Affectable (aff) -> (string_of_affectable aff)^" "
     | Booleen b -> if b then "true " else "false "
     | Entier i -> (string_of_int i)^" "
     | Unaire (op,e1) -> (string_of_unaire op) ^ (string_of_expression e1)^" "
@@ -64,12 +70,15 @@ struct
           | Fraction -> "["^(string_of_expression e1)^"/"^(string_of_expression e2)^"] "
           | _ -> (string_of_expression e1)^(string_of_binaire b)^(string_of_expression e2)^" "
         end
+    | Null -> "null "
+    | Adresse (n) -> "&"^n^" "
+    | New (t) -> "new "^(string_of_type t)^" "
 
   (* Conversion des instructions *)
   let rec string_of_instruction i =
     match i with
     | Declaration (t, n, e) -> "Declaration  : "^(string_of_type t)^" "^n^" = "^(string_of_expression e)^"\n"
-    | Affectation (n,e) ->  "Affectation  : "^n^" = "^(string_of_expression e)^"\n"
+    | Affectation (n,e) ->  "Affectation  : "^(string_of_affectable n)^" = "^(string_of_expression e)^"\n"
     | Constante (n,i) ->  "Constante  : "^n^" = "^(string_of_int i)^"\n"
     | Affichage e ->  "Affichage  : "^(string_of_expression e)^"\n"
     | Conditionnelle (c,t,e) ->  "Conditionnelle  : IF "^(string_of_expression c)^"\n"^

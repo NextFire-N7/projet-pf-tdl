@@ -3,7 +3,7 @@ open Exceptions
 
 exception ErreurNonDetectee;;
 
-(*
+
 (* ------------------------------ *)
 (* Sans fonction                  *)
 (* ------------------------------ *)
@@ -358,4 +358,3 @@ let%test_unit "code_complique" =
   let _ = compiler   "../../fichiersRat/src-rat-tam-test/complique.rat" in ()
 
 
-*)
