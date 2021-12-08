@@ -11,35 +11,41 @@ struct
 
   type t2 = string
 
-  (* AstTds.expression -> (AstType.Expression * typ) = <fun> *)
-  (* Paramètre:
+  (* AstType.expression -> string = <fun> *)
+  (* Paramètres:
        - expr: AstTds.expression = l'expression dont on souhaite vérifier le typage
-     Retour: (AstType.expression * typ)
-       - La nouvelle expression (principalement les nouveaux appels et nouveaux opérateurs
-       - Le type réel de l'expression après analyse
-       - Exceptions si les types attendus pour les diverses expressions ne correspondent pas aux types réels obtenus
+     Retour: string = Le code généré par l'expression
   *)
   let rec generer_code_expression expr =
     let code =
       match expr with
       | AstType.AppelFonction (ia, le) ->
+        (* Pour appeler une fonction, on génère le code des expressions formant les paramètres*)
           List.fold_left (fun c e -> c^generer_code_expression e) "" le ^
+          (* puis on appelle la fonction *)
           "CALL (LB) " ^ get_nom ia
       | AstType.Ident x ->
+          (* on récupère des données sur la variable *)
           let str_taille, str_add, reg = get_var_data x in
+          (* Et on la charge sur la stack *)
           "LOAD (" ^ str_taille ^ ") " ^ str_add ^ "[" ^ reg ^ "]"
+      (* En fonction du résultat du booleén, on charge 1 ou 0 sur la stack *)
       | AstType.Booleen b -> if b then "LOADL 1" else "LOADL 0"
+      (* De même, on charge la valeur de l'entier *)
       | AstType.Entier i -> "LOADL " ^ string_of_int i
       | AstType.Unaire (u, e) ->
           let code_u =
             match u with
+            (* Si l'on souhaite garder le numérateur, on enlève le dénominateur (valeur sur le dessus de la stack) *)
             | Numerateur -> "POP (0) 1"
+            (* Inversement poru le dénominateur *)
             | Denominateur -> "POP (1) 1"
           in
           generer_code_expression e ^ code_u
       | AstType.Binaire (b, e1, e2) ->
           let code_b =
             match b with
+            (* Pour Fraction, les deux valeurs sont déjà chargées dans le bon ordre sur la stack, rien n'est à faire. *)
             | Fraction -> ""
             | PlusInt -> "SUBR IAdd"
             | PlusRat -> "CALL (LB) RAdd"
@@ -53,92 +59,130 @@ struct
     in
     code ^ "\n"
 
-  (* analyse_type_instruction : typ option -> AstTds.instruction -> AstType.instruction *)
-  (* Paramètre tf : le type de retour de la fonction le cas échéant *)
-  (* Paramètre i : l'instruction à analyser *)
-  (* Vérifie le bon typage des identifiants, fait de la résolution de surcharge
-     et tranforme l'instruction en une instruction de type AstType.instruction *)
-  (* Erreur si mauvaise utilisation des identifiants *)
+  (* generer_code_instruction : AstType.instruction -> int -> int -> string * int *)
+  (* Paramètre i : l'instruction à générer *)
+  (* Paramètre taille_retour : taille du résultat si fonction *)
+  (* Paramètre taille_params : taille des paramètres si fonction *)
+  (* Génère le code TAM associé à l'instruction et renvoie aussi la taille de la déclaration 
+  le cas échéant (à pop à la fin du bloc) *)
   let rec generer_code_instruction i taille_retour taille_params =
     let code, taille =
       match i with
       | AstType.Declaration (ia, e) ->
           let taille_int = get_taille ia in
+          (* get_var_data renvoie la taille, l'adresse et le registre de la variable sous forme de strings *)
           let taille, addr, reg = get_var_data ia in
+          (* Réservation dans le stack *)
           "PUSH " ^ taille ^ "\n" ^
+          (* code de l'expr *)
           generer_code_expression e ^
+          (* Store du résultat de l'expression dans l'espace alloué précédement *)
           "STORE (" ^ taille ^ ") " ^ addr ^ "[" ^ reg ^ "]", taille_int
       | AstType.Affectation (ia, e) ->
           let taille, addr, reg = get_var_data ia in
+          (* code de l'expr *)
           generer_code_expression e ^
+          (* puis store *)
           "STORE (" ^ taille ^ ") " ^ addr ^ "[" ^ reg ^ "]", 0
       | AstType.AffichageInt e -> 
+          (* code de l'expr *)
           generer_code_expression e ^
+          (* puis affichage entier *)
           "SUBR IOut", 0
       | AstType.AffichageRat e ->
+          (* code de l'expr *)
           generer_code_expression e ^
+          (* puis affichage rationnel (callable défini en header) *)
           "CALL (LB) ROut", 0
       | AstType.AffichageBool e -> 
+          (* code de l'expr *)
           generer_code_expression e ^
+          (* puis affichage booléen *)
           "SUBR BOut", 0
       | AstType.Conditionnelle (e, bt, be) ->
+          (* génération d'étiquettes uniques pour le else et le end *)
           let etiqelse = getEtiquette () in
           let etiqfin = getEtiquette () in
+          (* code de la condition et jump dans le else si false *)
           generer_code_expression e ^ "JUMPIF (0) " ^ etiqelse ^ "\n" ^
+          (* code du bloc then *)
           generer_code_bloc bt taille_retour taille_params ^
+          (* jump vers le end *)
           "JUMP " ^ etiqfin ^ "\n" ^
+          (* else *)
           etiqelse ^ "\n" ^
+          (* code du bloc else *)
           generer_code_bloc be taille_retour taille_params ^
+          (* end *)
           etiqfin, 0
       | AstType.TantQue (e, b) ->
+          (* génération d'étiquettes uniques pour le debut et la fin de la boucle *)
           let etiqdeb = getEtiquette () in
           let etiqfin = getEtiquette () in
+          (* début boucle *)
           etiqdeb ^ "\n" ^
+          (* code de la condition et jump dans la fin si false *)
           generer_code_expression e ^
           "JUMPIF (0) " ^ etiqfin ^ "\n" ^
+          (* code du bloc *)
           generer_code_bloc b taille_retour taille_params ^
+          (* jump inconditionnel vers le debut *)
           "JUMP " ^ etiqdeb ^ "\n" ^
+          (* fin de la boucle *)
           etiqfin, 0
       | AstType.Retour e ->
+          (* code de l'expr *)
           generer_code_expression e ^ "\n" ^ 
+          (* puis retour *)
           "RETURN (" ^ string_of_int taille_retour ^ ") " ^ string_of_int taille_params, 0
       | AstType.Empty -> "", 0
     in
     code ^ "\n", taille
 
-  (* analyse_type_bloc : typ option -> AstTds.bloc -> AstType.bloc *)
-  (* Paramètre tf : type de retour de la fonction le cas échéant *)
-  (* Paramètre li : liste d'instructions à analyser *)
-  (* Vérifie le bon typage des identifiants et tranforme le bloc
-     en un bloc de type AstType.bloc *)
-  (* Erreur si mauvais typage des identifiants *)
+  (* generer_code_bloc : AstType.bloc -> int -> int -> t2(=string) *)
+  (* Paramètres 
+      - li = liste d'instructions *)
+  (*  - taille_retour = taille du type de retour (utile pour l'instruction return) *)
+  (*  - taille_params = taille de la liste de paramètres de la fonction (utile pour l'instruction return)*)
+  (* Génère le code correspondant au bloc, et retire du stack les nouvelles variables déclarées *)
   and generer_code_bloc li taille_retour taille_params =
+    (* On récupère le code généré ainsi que la taille des nouvelles variables push sur le stack *)
     let code, taille = List.fold_right
       (fun i (c, t) -> 
+        (* Pour chaque instruction, on récupère le code ansi que la taille allouée sur le stack *)
         let code, taille = (generer_code_instruction i taille_retour taille_params) in 
         code ^ c, t + taille)
       li ("", 0)
-    in code ^ "POP (0) " ^ string_of_int taille ^ "\n"
+    in code ^ 
+    (* Si des variables ont été déclarées, il est nécessaire de les enlever su stack à la fin du bloc (sortie du scope)*)
+    (if taille > 0 then ("POP (0) " ^ string_of_int taille) else "") ^ 
+    "\n"
 
-  (* analyse_type_fonction : AstTds.fonction -> AstType.fonction *)
+  (* generer_code_fonction : AstPlacement.fonction -> string *)
   (* Paramètre : la fonction à analyser *)
-  (* Vérifie le bon typage des identifiants et tranforme la fonction
-     en une fonction de type AstType.fonction *)
-  (* Erreur si mauvais typage des identifiants *)
+  (* Génère le code de la fonction *)
   let generer_code_fonction (AstPlacement.Fonction (ia, lp, li)) =
+    (* Saut de ligne pour mieux formater le fichier en language TAM *)
+    "\n" ^
+    (* étiquette qui porte le nom de la fonction *)
     get_nom ia ^ "\n" ^
+    (* code de la fonction *)
     generer_code_bloc li (get_taille ia) (List.fold_right (fun param taille -> (get_taille param)+taille) lp 0) ^
+    (* HALT pour éviter les problèmes avec les fonctions sans retour *)
     "HALT\n"
 
-  (* analyser : AstTds.Programme -> AstType.Programme *)
+  (* analyser : AstPlacement.Programme -> string *)
   (* Paramètre : le programme à analyser *)
-  (* Vérifie le bon typage des identifiants et tranforme le programme
-     en un programme de type AstType.Programme *)
-  (* Erreur si mauvais typage des identifiants *)
+  (* Génère tout le code du programme compilé en language machine TAM *)
   let analyser (AstPlacement.Programme (fonctions, prog)) = 
+    (* On place les headers *)
     getEntete () ^
+    (* On code les fonctions *)
     List.fold_right (fun f c -> generer_code_fonction f ^ c) fonctions "" ^
+    (* Début du main *)
     "main\n" ^
+    (* Code du main *)
     generer_code_bloc prog 0 0 ^
+    (* Fin du programme principal *)
     "HALT"
 end
