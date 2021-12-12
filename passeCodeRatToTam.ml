@@ -24,11 +24,11 @@ struct
           List.fold_left (fun c e -> c^generer_code_expression e) "" le ^
           (* puis on appelle la fonction *)
           "CALL (LB) " ^ get_nom ia
-      | AstType.Ident x ->
+      (* | AstType.Ident x ->
           (* on récupère des données sur la variable *)
           let str_taille, str_add, reg = get_var_data x in
           (* Et on la charge sur la stack *)
-          "LOAD (" ^ str_taille ^ ") " ^ str_add ^ "[" ^ reg ^ "]"
+          "LOAD (" ^ str_taille ^ ") " ^ str_add ^ "[" ^ reg ^ "]" *)
       (* En fonction du résultat du booleén, on charge 1 ou 0 sur la stack *)
       | AstType.Booleen b -> if b then "LOADL 1" else "LOADL 0"
       (* De même, on charge la valeur de l'entier *)
@@ -78,12 +78,12 @@ struct
           generer_code_expression e ^
           (* Store du résultat de l'expression dans l'espace alloué précédement *)
           "STORE (" ^ taille ^ ") " ^ addr ^ "[" ^ reg ^ "]", taille_int
-      | AstType.Affectation (ia, e) ->
+      (* | AstType.Affectation (ia, e) ->
           let taille, addr, reg = get_var_data ia in
           (* code de l'expr *)
           generer_code_expression e ^
           (* puis store *)
-          "STORE (" ^ taille ^ ") " ^ addr ^ "[" ^ reg ^ "]", 0
+          "STORE (" ^ taille ^ ") " ^ addr ^ "[" ^ reg ^ "]", 0 *)
       | AstType.AffichageInt e -> 
           (* code de l'expr *)
           generer_code_expression e ^

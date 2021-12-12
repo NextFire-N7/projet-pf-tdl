@@ -12,3 +12,4 @@ exception TypeInattendu of typ * typ
 exception TypesParametresInattendus of typ list * typ list
 exception TypeBinaireInattendu of binaire * typ * typ (* les types sont les types réels non compatible avec les signatures connues de l'opérateur *)
 exception RetourDansMain
+exception DereferenceNonPointeur of typ

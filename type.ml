@@ -1,10 +1,11 @@
 type typ = Bool | Int | Rat | Undefined | Pointeur of typ
 
-let string_of_type t = 
+let rec string_of_type t = 
   match t with
   | Bool ->  "Bool"
   | Int  ->  "Int"
   | Rat  ->  "Rat"
+  | Pointeur t -> "* "^(string_of_type t)
   | Undefined -> "Undefined"
 
 
@@ -51,6 +52,7 @@ let getTaille t =
   | Bool -> 1
   | Rat -> 2
   | Undefined -> 0
+  | Pointeur _ -> 1
   
 let%test _ = getTaille Int = 1
 let%test _ = getTaille Bool = 1

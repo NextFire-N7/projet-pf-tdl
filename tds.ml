@@ -358,6 +358,7 @@ let%test _ =
     match i with
     | InfoVar (_,t,_,_) -> t
     | InfoFun (_,t,_) -> t
+    | InfoConst _ -> Int
     | _ -> failwith "Appel get_type pas sur un InfoVar ou InfoFun"
 
   let get_types_params ia =

@@ -130,6 +130,9 @@ end
 module AstType =
 struct
 
+(* Pointeurs *)
+type affectable = AstTds.affectable
+
 (* Opérateurs unaires de Rat - résolution de la surcharge *)
 type unaire = Numerateur | Denominateur
 
@@ -145,6 +148,10 @@ type expression =
   | Entier of int
   | Unaire of unaire * expression
   | Binaire of binaire * expression * expression
+  (* pointeurs *)
+  | Adresse of Tds.info_ast
+  | Null
+  | New of typ
 
 (* instructions existantes Rat *)
 (* = instruction de AstTds + informations associées aux identificateurs, mises à jour *)
