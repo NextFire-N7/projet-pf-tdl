@@ -62,14 +62,23 @@ val modifier_type_fonction_info : typ -> typ list -> info_ast -> unit
 (* Modifie l'emplacement (dépl, registre) si c'est une InfoVar, ne fait rien sinon *)
 val modifier_adresse_info : int -> string -> info_ast -> unit
 
+(* Retourne le nom d'une variable, constante ou fonction *)
 val get_nom: info_ast -> string
 
+(* retourne le type d'une variable ou constante (Int), ou le type de retour d'une fonction *)
 val get_type: info_ast -> typ
+
+(* Retourne la taille du type associé (voir get_type) *)
 val get_taille: info_ast -> int
 
+(* Retourne la liste des types des paramètres d'une fonction. *)
 val get_types_params: info_ast -> typ list
 
+(* Retourne le déplacement par rapport au registre de la variable *)
 val get_adresse_var: info_ast -> int
+
+(* Retourne le registre dans lequel est stocké la variable *)
 val get_registre_var: info_ast -> string
 
+(* Retourne toutes les infos concernant une variable (sa taille de type (en string), son déplacement (en string) et son registre) *)
 val get_var_data: info_ast -> string * string * string

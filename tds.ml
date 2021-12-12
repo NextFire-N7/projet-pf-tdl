@@ -353,13 +353,21 @@ let%test _ =
     | InfoVar(n,_,_,_) -> n
     | InfoConst(n,_) -> n
 
+let %test _ = get_nom (ref (InfoConst ("const", 42))) = "const"
+let %test _ = get_nom (ref (InfoVar ("var", Rat, 0, ""))) = "var"
+let %test _ = get_nom (ref (InfoFun ("fun", Pointeur Int, []))) = "fun"
+
   let get_type ia =
     let i = info_ast_to_info ia in
     match i with
     | InfoVar (_,t,_,_) -> t
     | InfoFun (_,t,_) -> t
     | InfoConst _ -> Int
-    | _ -> failwith "Appel get_type pas sur un InfoVar ou InfoFun"
+    (* | _ -> failwith "Appel get_type pas sur un InfoVar ou InfoFun" *)
+
+let %test _ = get_type (ref (InfoConst ("const", 42))) = Int
+let %test _ = get_type (ref (InfoVar ("var", Rat, 0, ""))) = Rat
+let %test _ = get_type (ref (InfoFun ("fun", Pointeur Int, []))) = Pointeur Int
 
   let get_types_params ia =
     let i = info_ast_to_info ia in
@@ -370,11 +378,19 @@ let%test _ =
   let get_taille ia =
     getTaille (get_type ia)
 
+let %test _ = get_taille (ref (InfoConst ("const", 42))) = getTaille Int
+let %test _ = get_taille (ref (InfoVar ("var", Rat, 0, ""))) = getTaille Rat
+let %test _ = get_taille (ref (InfoFun ("fun", Pointeur Int, []))) = getTaille (Pointeur Int)
+
   let get_adresse_var ia =
     let i = info_ast_to_info ia in
     match i with
     | InfoVar(_,_,d,_) -> d
     | _ -> failwith "Appel get_adresse_var pas sur un InfoVar"
+
+let%test _ = try get_adresse_var (ref (InfoConst ("const", 42))) = 0 with Failure _ -> true
+let%test _ = get_adresse_var (ref (InfoVar ("var", Rat, 5, ""))) = 5
+let%test _ = try get_adresse_var (ref (InfoFun ("fun", Pointeur Int, []))) = 0 with Failure _ -> true
 
   let get_registre_var ia =
     let i = info_ast_to_info ia in
@@ -382,8 +398,16 @@ let%test _ =
     | InfoVar(_,_,_,r) -> r
     | _ -> failwith "Appel get_registre_var pas sur un InfoVar"
 
+let%test _ = try get_registre_var (ref (InfoConst ("const", 42))) = "" with Failure _ -> true
+let%test _ = get_registre_var (ref (InfoVar ("var", Rat, 5, "DB"))) = "DB"
+let%test _ = try get_registre_var (ref (InfoFun ("fun", Pointeur Int, []))) = "" with Failure _ -> true
+
   let get_var_data ia =
     let taille = string_of_int (get_taille ia) in
     let adresse = string_of_int (get_adresse_var ia) in
     let registre = get_registre_var ia in
     (taille, adresse, registre)
+
+let%test _ = try get_var_data (ref (InfoConst ("const", 42))) = ("","","") with Failure _ -> true
+let%test _ = get_var_data (ref (InfoVar ("var", Rat, 5, "DB"))) = ("2", "5", "DB")
+let%test _ = try get_var_data (ref (InfoFun ("fun", Pointeur Int, []))) = ("","","") with Failure _ -> true
