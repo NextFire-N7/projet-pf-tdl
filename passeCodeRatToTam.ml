@@ -8,8 +8,22 @@ struct
   open Code
 
   type t1 = Ast.AstPlacement.programme
-
   type t2 = string
+
+  let rec generer_code_affectable modif aff =
+    match aff with
+    | AstTds.Deref a -> generer_code_affectable modif a
+    | AstTds.Ident ia -> (
+        match info_ast_to_info ia with
+        | InfoConst (_, v) -> "LOADL " ^ string_of_int v
+        | InfoVar _ ->
+            (* on récupère des données sur la variable *)
+            let str_taille, str_add, reg = get_var_data ia in
+            (* Et on la charge sur la stack *)
+            if modif then "STORE (" ^ str_taille ^ ") " ^ str_add ^ "[" ^ reg ^ "]"
+            else "LOAD (" ^ str_taille ^ ") " ^ str_add ^ "[" ^ reg ^ "]"
+        | _ -> failwith "on a foiré le typage") 
+      
 
   (* AstType.expression -> string = <fun> *)
   (* Paramètres:
@@ -20,15 +34,18 @@ struct
     let code =
       match expr with
       | AstType.AppelFonction (ia, le) ->
-        (* Pour appeler une fonction, on génère le code des expressions formant les paramètres*)
+          (* Pour appeler une fonction, on génère le code des expressions formant les paramètres*)
           List.fold_left (fun c e -> c^generer_code_expression e) "" le ^
           (* puis on appelle la fonction *)
           "CALL (LB) " ^ get_nom ia
-      (* | AstType.Ident x ->
-          (* on récupère des données sur la variable *)
-          let str_taille, str_add, reg = get_var_data x in
-          (* Et on la charge sur la stack *)
-          "LOAD (" ^ str_taille ^ ") " ^ str_add ^ "[" ^ reg ^ "]" *)
+      | AstType.Affectable aff -> generer_code_affectable false aff
+      | AstType.Null -> "SUBR MVoid"
+      | AstType.New t ->
+          "LOADL " ^ string_of_int (getTaille t) ^ "\n" ^
+          "SUBR MAlloc"
+      | AstType.Adresse ia ->
+          let _, str_add, reg = get_var_data ia in
+          "LOADA " ^  str_add ^ "[" ^ reg ^ "]"
       (* En fonction du résultat du booleén, on charge 1 ou 0 sur la stack *)
       | AstType.Booleen b -> if b then "LOADL 1" else "LOADL 0"
       (* De même, on charge la valeur de l'entier *)
@@ -78,12 +95,11 @@ struct
           generer_code_expression e ^
           (* Store du résultat de l'expression dans l'espace alloué précédement *)
           "STORE (" ^ taille ^ ") " ^ addr ^ "[" ^ reg ^ "]", taille_int
-      (* | AstType.Affectation (ia, e) ->
-          let taille, addr, reg = get_var_data ia in
+      | AstType.Affectation (aff, e) ->
           (* code de l'expr *)
           generer_code_expression e ^
           (* puis store *)
-          "STORE (" ^ taille ^ ") " ^ addr ^ "[" ^ reg ^ "]", 0 *)
+          generer_code_affectable true aff, 0
       | AstType.AffichageInt e -> 
           (* code de l'expr *)
           generer_code_expression e ^

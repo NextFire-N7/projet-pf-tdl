@@ -9,32 +9,32 @@ module PasseTypeRat :
   open Type
 
   type t1 = Ast.AstTds.programme
-
   type t2 = Ast.AstType.programme
-  
+
   (* AstTds.affectable -> (AstType.affectable * typ) = <fun> *)
   (* Paramètre:
-      - a: AstTds.affectable = l'affectable
-  Retour:
-      - AstType.affectable = le même affectable
-      - typ = le type de l'affectable
-  Raise:
-      - DereferenceNonPointeur t = Si l'on tente de déréférencer un type t autre que Pointeur
+         - a: AstTds.affectable = l'affectable
+     Retour:
+         - AstType.affectable = le même affectable
+         - typ = le type de l'affectable
+     Raise:
+         - DereferenceNonPointeur t = Si l'on tente de déréférencer un type t autre que Pointeur
   *)
   let rec analyse_type_affectable a =
-    let t = 
+    let t =
       match a with
-      | AstTds.Deref a -> 
+      | AstTds.Deref a -> (
           (* On récupère le type réel de l'affectable déréférencé *)
-          let (_, taff) = analyse_type_affectable a in
-          (match taff with
+          let _, taff = analyse_type_affectable a in
+          match taff with
           (* On déréférence le pointeur *)
           | Pointeur t -> t
           (* Si ce n'est pas un pointeur, on renvoir une erreur *)
           | _ -> raise (DereferenceNonPointeur taff))
       (* Si c'est un identifiant, on retourne le type de l'identifiant. *)
       | AstTds.Ident ia -> get_type ia
-    in (a, t)
+    in
+    (a, t)
 
   (* AstTds.expression -> (AstType.Expression * typ) = <fun> *)
   (* Paramètre:
@@ -60,15 +60,14 @@ module PasseTypeRat :
         (* TODO: Utiliser est_compatible *)
         if tpara = nlt then (AppelFonction (ia, nle), tr)
         else raise (TypesParametresInattendus (nlt, tpara))
-    | AstTds.Affectable aff -> 
-      let naff, taff = analyse_type_affectable aff in
-      (Affectable naff, taff)
-
+    | AstTds.Affectable aff ->
+        let naff, taff = analyse_type_affectable aff in
+        (Affectable naff, taff)
     | AstTds.Null -> (Null, Pointeur Undefined)
     | AstTds.New t -> (New t, Pointeur t)
-    | AstTds.Adresse ia -> 
-      let t = get_type ia in 
-      (Adresse ia, (Pointeur(t)))
+    | AstTds.Adresse ia ->
+        let t = get_type ia in
+        (Adresse ia, Pointeur t)
     | AstTds.Booleen b -> (Booleen b, Bool)
     | AstTds.Entier i -> (Entier i, Int)
     | AstTds.Unaire (u, e) ->

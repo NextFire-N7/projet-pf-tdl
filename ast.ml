@@ -3,6 +3,7 @@ open Type
 (* Interface des arbres abstraits *)
 module type Ast =
 sig
+   type affectable
    type expression
    type instruction
    type fonction
@@ -191,6 +192,9 @@ end
 (* ******************************* *)
 module AstPlacement =
 struct
+
+(* Pointeurs *)
+type affectable = AstType.affectable
 
 (* Expressions existantes dans notre langage *)
 (* = expression de AstType  *)

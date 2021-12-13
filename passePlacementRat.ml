@@ -9,7 +9,6 @@ module PassePlacementRat :
   open Type
 
   type t1 = Ast.AstType.programme
-
   type t2 = Ast.AstPlacement.programme
 
   (* analyse_placement_instruction : string -> int -> AstType.instruction -> int *)

@@ -39,10 +39,10 @@ let%test _ = not (est_compatible Undefined Rat)
 let%test _ = not (est_compatible Undefined Bool)
 
 (* Pointeurs *)
-let%test _ = (est_compatible (Pointeur Int) (Pointeur Int));
-let%test _ = (est_compatible (Pointeur Int) (Pointeur Undefined));
-let%test _ = (not (est_compatible (Pointeur Int) (Pointeur Bool)));
-let%test _ = not (est_compatible (Pointeur Int) Rat);
+let%test _ = (est_compatible (Pointeur Int) (Pointeur Int))
+let%test _ = (est_compatible (Pointeur Int) (Pointeur Undefined))
+let%test _ = (not (est_compatible (Pointeur Int) (Pointeur Bool)))
+let%test _ = not (est_compatible (Pointeur Int) Rat)
 
 let est_compatible_list lt1 lt2 =
   try
