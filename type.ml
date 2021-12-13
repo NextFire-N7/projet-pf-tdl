@@ -5,7 +5,7 @@ let rec string_of_type t =
   | Bool ->  "Bool"
   | Int  ->  "Int"
   | Rat  ->  "Rat"
-  | Pointeur t -> "* "^(string_of_type t)
+  | Pointeur t -> (string_of_type t)^" * "
   | Undefined -> "Undefined"
 
 
@@ -16,7 +16,8 @@ let rec est_compatible t1 t2 =
   | Rat, Rat -> true 
   | Pointeur a, Pointeur b -> (est_compatible a b) ||
     (match a,b with
-    | Undefined, _ | _, Undefined -> true
+    (* Pointeur null *)
+    | _, Undefined -> true
     | _ -> false)
   | _ -> false 
 
