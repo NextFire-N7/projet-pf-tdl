@@ -1,0 +1,4 @@
+test{
+    int * x_ptr = null;
+    print 0;
+}

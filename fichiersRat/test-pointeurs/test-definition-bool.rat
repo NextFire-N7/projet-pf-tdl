@@ -1,0 +1,5 @@
+test{
+    bool x = false;
+    bool * x_ptr = &x;
+    print x;
+}
