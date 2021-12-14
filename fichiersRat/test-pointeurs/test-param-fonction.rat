@@ -1,0 +1,11 @@
+bool double (int * x) {
+    * x = * x + * x;
+    return true;
+}
+
+test {
+    int x = 5;
+    int * x_ptr = &x;
+    print call double (x_ptr);
+    print x;
+}

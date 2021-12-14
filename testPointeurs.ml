@@ -49,3 +49,22 @@ let%expect_test "test-mauvaise-definition" =
 let%expect_test "test-acces-statique" =
   runtam "../../fichiersRat/test-pointeurs/test-acces-statique.rat";
   [%expect{| 5 |}]
+
+let%expect_test "test-mauvaise-deref" =
+  try let _ = runtam "../../fichiersRat/test-pointeurs/test-mauvaise-deref.rat"
+  in raise ErreurNonDetectee 
+  with 
+  | DereferenceNonPointeur _ -> ();
+  [%expect{| |}]
+  
+let%expect_test "test-pointeur-pointeur" =
+  runtam "../../fichiersRat/test-pointeurs/test-pointeur-pointeur.rat";
+  [%expect{| 5 |}]
+
+let%expect_test "test-acces-dynamique" =
+  runtam "../../fichiersRat/test-pointeurs/test-acces-dynamique.rat";
+  [%expect{| 7 |}]
+
+let%expect_test "test-param-fonction" =
+  runtam "../../fichiersRat/test-pointeurs/test-param-fonction.rat";
+  [%expect{| true10 |}]
