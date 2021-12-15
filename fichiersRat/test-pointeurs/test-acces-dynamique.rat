@@ -1,6 +1,6 @@
 test{
     int x = 5;
     int * x_ptr = &x;
-    * x = 7
+    * x_ptr = 7;
     print x;
 }

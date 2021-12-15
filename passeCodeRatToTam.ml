@@ -10,20 +10,31 @@ struct
   type t1 = Ast.AstPlacement.programme
   type t2 = string
 
-  let rec generer_code_affectable modif aff =
-    match aff with
-    | AstTds.Deref a -> generer_code_affectable modif a
-    | AstTds.Ident ia -> (
-        match info_ast_to_info ia with
-        | InfoConst (_, v) -> "LOADL " ^ string_of_int v
-        | InfoVar _ ->
-            (* on récupère des données sur la variable *)
-            let str_taille, str_add, reg = get_var_data ia in
-            (* Et on la charge sur la stack *)
-            if modif then "STORE (" ^ str_taille ^ ") " ^ str_add ^ "[" ^ reg ^ "]"
-            else "LOAD (" ^ str_taille ^ ") " ^ str_add ^ "[" ^ reg ^ "]"
-        | _ -> failwith "on a foiré le typage") 
-      
+  let generer_code_affectable modif aff =
+    let rec generer_code_affectable_int modif aff =
+      match aff with
+      | AstTds.Deref a ->
+          let code, taille = generer_code_affectable_int modif a in
+          (code ^ "\n" ^ "LOADI (" ^ string_of_int taille ^ ")", 0)
+      | AstTds.Ident ia -> (
+          match info_ast_to_info ia with
+          | InfoConst (_, v) ->
+              if modif then failwith "on a foiré le typage"
+              else ("LOADL " ^ string_of_int v, 0)
+          | InfoVar (_, t, _, _) ->
+              (* on récupère des données sur la variable *)
+              let str_taille, str_add, reg = get_var_data ia in
+              (* Et on la charge sur la stack *)
+              let code =
+                if modif then
+                  "STORE (" ^ str_taille ^ ") " ^ str_add ^ "[" ^ reg ^ "]"
+                else "LOAD (" ^ str_taille ^ ") " ^ str_add ^ "[" ^ reg ^ "]"
+              in
+              (code, getTaille t)
+          | _ -> failwith "on a foiré le typage")
+    in
+    let code, _ = generer_code_affectable_int modif aff in
+    code
 
   (* AstType.expression -> string = <fun> *)
   (* Paramètres:
@@ -80,7 +91,7 @@ struct
   (* Paramètre i : l'instruction à générer *)
   (* Paramètre taille_retour : taille du résultat si fonction *)
   (* Paramètre taille_params : taille des paramètres si fonction *)
-  (* Génère le code TAM associé à l'instruction et renvoie aussi la taille de la déclaration 
+  (* Génère le code TAM associé à l'instruction et renvoie aussi la taille de la déclaration
   le cas échéant (à pop à la fin du bloc) *)
   let rec generer_code_instruction i taille_retour taille_params =
     let code, taille =
@@ -100,7 +111,7 @@ struct
           generer_code_expression e ^
           (* puis store *)
           generer_code_affectable true aff, 0
-      | AstType.AffichageInt e -> 
+      | AstType.AffichageInt e ->
           (* code de l'expr *)
           generer_code_expression e ^
           (* puis affichage entier *)
@@ -110,7 +121,7 @@ struct
           generer_code_expression e ^
           (* puis affichage rationnel (callable défini en header) *)
           "CALL (LB) ROut", 0
-      | AstType.AffichageBool e -> 
+      | AstType.AffichageBool e ->
           (* code de l'expr *)
           generer_code_expression e ^
           (* puis affichage booléen *)
@@ -148,7 +159,7 @@ struct
           etiqfin, 0
       | AstType.Retour e ->
           (* code de l'expr *)
-          generer_code_expression e ^ "\n" ^ 
+          generer_code_expression e ^ "\n" ^
           (* puis retour *)
           "RETURN (" ^ string_of_int taille_retour ^ ") " ^ string_of_int taille_params, 0
       | AstType.Empty -> "", 0
@@ -156,7 +167,7 @@ struct
     code ^ "\n", taille
 
   (* generer_code_bloc : AstType.bloc -> int -> int -> t2(=string) *)
-  (* Paramètres 
+  (* Paramètres
       - li = liste d'instructions *)
   (*  - taille_retour = taille du type de retour (utile pour l'instruction return) *)
   (*  - taille_params = taille de la liste de paramètres de la fonction (utile pour l'instruction return)*)
@@ -164,14 +175,14 @@ struct
   and generer_code_bloc li taille_retour taille_params =
     (* On récupère le code généré ainsi que la taille des nouvelles variables push sur le stack *)
     let code, taille = List.fold_right
-      (fun i (c, t) -> 
+      (fun i (c, t) ->
         (* Pour chaque instruction, on récupère le code ansi que la taille allouée sur le stack *)
-        let code, taille = (generer_code_instruction i taille_retour taille_params) in 
+        let code, taille = (generer_code_instruction i taille_retour taille_params) in
         code ^ c, t + taille)
       li ("", 0)
-    in code ^ 
+    in code ^
     (* Si des variables ont été déclarées, il est nécessaire de les enlever su stack à la fin du bloc (sortie du scope)*)
-    (if taille > 0 then ("POP (0) " ^ string_of_int taille) else "") ^ 
+    (if taille > 0 then ("POP (0) " ^ string_of_int taille) else "") ^
     "\n"
 
   (* generer_code_fonction : AstPlacement.fonction -> string *)
@@ -190,7 +201,7 @@ struct
   (* analyser : AstPlacement.Programme -> string *)
   (* Paramètre : le programme à analyser *)
   (* Génère tout le code du programme compilé en language machine TAM *)
-  let analyser (AstPlacement.Programme (fonctions, prog)) = 
+  let analyser (AstPlacement.Programme (fonctions, prog)) =
     (* On place les headers *)
     getEntete () ^
     (* On code les fonctions *)
