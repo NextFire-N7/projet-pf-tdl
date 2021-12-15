@@ -14,8 +14,9 @@ struct
     let rec generer_code_affectable_int modif aff =
       match aff with
       | AstTds.Deref a ->
-          let code, taille = generer_code_affectable_int modif a in
-          (code ^ "\n" ^ "LOADI (" ^ string_of_int taille ^ ")", 1)
+          let code, taille = generer_code_affectable_int false a in
+          if modif then (code ^ "\n" ^ "STOREI (" ^ string_of_int taille ^ ")", 0)
+          else (code ^ "\n" ^ "LOADI (" ^ string_of_int taille ^ ")", 1)
       | AstTds.Ident ia -> (
           match info_ast_to_info ia with
           | InfoConst (_, v) ->
