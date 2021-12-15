@@ -1,6 +1,6 @@
 test{
     int x = 5;
     int * x_ptr = &x;
-    int * * x_ptr_ptr = &x_ptr
+    int * * x_ptr_ptr = &x_ptr;
     print * * x_ptr_ptr;
 }
