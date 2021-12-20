@@ -1,0 +1,5 @@
+test {
+    bool x = false;
+    x += true;
+    print x;
+}

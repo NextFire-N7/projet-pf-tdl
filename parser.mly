@@ -80,6 +80,8 @@ i :
 | IF exp=e li1=bloc ELSE li2=bloc   {Conditionnelle (exp,li1,li2)}
 | WHILE exp=e li=bloc               {TantQue (exp,li)}
 | RETURN exp=e PV                   {Retour (exp)}
+(* Addition-affectation *)
+| a=a PLUS EQUAL e=e PV             {AddAff(a, e)}
 
 dp :
 |                         {[]}

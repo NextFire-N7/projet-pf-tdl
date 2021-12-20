@@ -140,6 +140,11 @@ module PasseTdsRat :
         (* Analyse de l'expression *)
         let ne = analyse_tds_expression tds e in
         Retour ne
+    
+    | AstSyntax.AddAff(aff, exp) -> 
+        let naff = analyse_tds_affectable tds true aff in
+        let ne = analyse_tds_expression tds exp in
+        AddAff (naff, ne)
 
   (* analyse_tds_bloc : AstSyntax.bloc -> AstTds.bloc *)
   (* Paramètre tds : la table des symboles courante *)

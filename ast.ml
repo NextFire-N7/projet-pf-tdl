@@ -65,6 +65,8 @@ and instruction =
   | TantQue of expression * bloc
   (* return d'une fonction *)
   | Retour of expression
+  (* Addition-affectation *)
+  | AddAff of affectable * expression
 
 (* Structure des fonctions de Rat *)
 (* type de retour - nom - liste des paramètres (association type et nom) - corps de la fonction *)
@@ -113,6 +115,7 @@ struct
     | TantQue of expression * bloc
     | Retour of expression
     | Empty (* les nœuds ayant disparus: Const *)
+    | AddAff of affectable * expression
 
 
   (* Structure des fonctions dans notre langage *)
@@ -168,6 +171,9 @@ type bloc = instruction list
   | TantQue of expression * bloc
   | Retour of expression
   | Empty (* les nœuds ayant disparus: Const *)
+
+  | AddAffEntier of affectable * expression
+  | AddAffRat of affectable * expression
 
 (* informations associées à l'identificateur (dont son nom), liste des paramètres, corps *)
 type fonction = Fonction of Tds.info_ast * Tds.info_ast list * bloc
