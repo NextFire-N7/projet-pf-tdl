@@ -5,7 +5,7 @@ let rec string_of_type t =
   | Bool ->  "Bool"
   | Int  ->  "Int"
   | Rat  ->  "Rat"
-  | Pointeur t -> (string_of_type t)^" * "
+  | Pointeur t -> "* "(string_of_type t)
   | Undefined -> "Undefined"
 
 
