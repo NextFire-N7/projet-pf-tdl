@@ -65,6 +65,8 @@ and instruction =
   | TantQue of expression * bloc
   (* return d'une fonction *)
   | Retour of expression
+  (* Addition-affectation *)
+  | AddAff of affectable * expression
 
 (* Structure des fonctions de Rat *)
 (* type de retour - nom - liste des paramètres (association type et nom) - corps de la fonction *)
