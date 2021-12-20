@@ -156,7 +156,7 @@ module PasseTypeRat :
             else raise (TypeInattendu (te, t)))
     | AstTds.Empty -> Empty
 
-    | AstTds.AddAff ->  let ne, te = analyse_type_expression e in
+    | AstTds.AddAff (aff, e) ->  let ne, te = analyse_type_expression e in
         let naff, taff = analyse_type_affectable aff in
         (* Crash si le type de l'expression n'est pas compatible avec celui déclaré *)
         if (est_compatible taff te) then 

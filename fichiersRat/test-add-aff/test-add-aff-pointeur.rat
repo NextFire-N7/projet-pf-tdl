@@ -1,0 +1,6 @@
+test {
+    int x = 5;
+    int *x_ptr = &x;
+    x_ptr += 5;
+    print x;
+}

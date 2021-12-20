@@ -10,33 +10,6 @@ struct
   type t1 = Ast.AstPlacement.programme
   type t2 = string
 
-
-  let generer_code_addaff aff expr_add_code taille = 
-    match aff with
-    | AstTds.Deref a -> 
-      (* Optimisation du code : On charge l'adresse, pour éviter de descendre deux fois la chaine de pointeurs *)
-      let load_code = generer_code_affectable false a in
-      let store_code = 
-      load_code ^
-      (* Copie de l'adresse sur le sommet du stack *)
-      "LOAD (1) 0[ST]" ^ "\n" ^
-      (* Chargement de la variable *)
-      "LOADI (" ^ string_of_int taille ^ ")" ^ "\n" ^
-      (* Evaluation de l'expression + Addition *)
-      expr_add_code ^ "\n" ^
-      (* On récupère encore l'adresse pour le stockage *)
-      "LOAD (1) -" ^ string_of_int taille ^ "[ST]" ^"\n" ^
-      "STOREI (" ^ string_of_int taille ^")" ^ "\n" ^
-      (* Enfin, on supprime l'adresse du stack *)
-      "POP 1"
-
-      (* Pout une simple variable, pas besoin  *)
-    | AstTds.Ident _ ->
-      generer_code_affectable false aff ^ "\n"
-      expr_add_code ^ "\n" ^
-      generer_code_affectable true aff
-
-
   let generer_code_affectable modif aff =
     let rec generer_code_affectable_int modif aff =
       match aff with
@@ -60,9 +33,33 @@ struct
               in
               (code, getTaille t)
           | _ -> failwith "on a foiré le typage")
-    in generer_code_affectable_int modif aff
-    (* let code, _ = generer_code_affectable_int modif aff in
-    code *)
+    in let code, _ = generer_code_affectable_int modif aff in
+    code
+
+
+  let generer_code_addaff aff expr_add_code taille = 
+    match aff with
+    | AstTds.Deref a -> 
+      (* Optimisation du code : On charge l'adresse, pour éviter de descendre deux fois la chaine de pointeurs *)
+      let load_code = generer_code_affectable false a in
+      load_code ^ "\n" ^
+      (* Copie de l'adresse sur le sommet du stack *)
+      "LOAD (1) -1[ST]" ^ "\n" ^
+      (* Chargement de la variable *)
+      "LOADI (" ^ string_of_int taille ^ ")" ^ "\n" ^
+      (* Evaluation de l'expression + Addition *)
+      expr_add_code ^ "\n" ^
+      (* On récupère encore l'adresse pour le stockage *)
+      "LOAD (1) -" ^ string_of_int (taille+1) ^ "[ST]" ^"\n" ^
+      "STOREI (" ^ string_of_int taille ^")" ^ "\n" ^
+      (* Enfin, on supprime l'adresse du stack *)
+      "POP (0) 1"
+
+      (* Pout une simple variable, pas besoin  *)
+    | AstTds.Ident _ ->
+      generer_code_affectable false aff ^ "\n" ^
+      expr_add_code ^ "\n" ^
+      generer_code_affectable true aff
 
   (* AstType.expression -> string = <fun> *)
   (* Paramètres:
@@ -192,8 +189,8 @@ struct
           "RETURN (" ^ string_of_int taille_retour ^ ") " ^ string_of_int taille_params, 0
       | AstType.Empty -> "", 0
 
-      | AstType.AddAffEntier (aff, exp) -> generer_code_addaff aff ((generer_code_expression exp) ^ "SUBR IAdd") 1
-      | AstType.AddAffRat (aff, exp) -> generer_code_addaff aff ((generer_code_expression exp) ^ "CALL (-) RAdd") 2
+      | AstType.AddAffEntier (aff, exp) -> generer_code_addaff aff ((generer_code_expression exp) ^ "SUBR IAdd") 1 , 0
+      | AstType.AddAffRat (aff, exp) -> generer_code_addaff aff ((generer_code_expression exp) ^ "CALL (LB) RAdd") 2 , 0
     in
     code ^ "\n", taille
 
