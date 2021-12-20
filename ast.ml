@@ -5,6 +5,7 @@ module type Ast =
 sig
    type affectable
    type expression
+   type typedef
    type instruction
    type fonction
    type programme
@@ -25,6 +26,10 @@ type binaire = Fraction | Plus | Mult | Equ | Inf
 
 (*pointeurs*)
 type affectable = Ident of string | Deref of affectable
+
+(* types nommés *)
+(* nom - type *)
+type typedef = TypedefGlobal of string * typ
 
 (* Expressions de Rat *)
 type expression =
@@ -67,6 +72,8 @@ and instruction =
   | Retour of expression
   (* Addition-affectation *)
   | AddAff of affectable * expression
+  (* typedef *)
+  | TypedefLocal of string * typ
 
 (* Structure des fonctions de Rat *)
 (* type de retour - nom - liste des paramètres (association type et nom) - corps de la fonction *)
@@ -74,7 +81,8 @@ type fonction = Fonction of typ * string * (typ * string) list * bloc
 
 (* Structure d'un programme Rat *)
 (* liste de fonction - programme principal *)
-type programme = Programme of fonction list * bloc
+(* update: types nommés *)
+type programme = Programme of typedef list * fonction list * bloc
 
 end
 
