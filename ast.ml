@@ -115,6 +115,7 @@ struct
     | TantQue of expression * bloc
     | Retour of expression
     | Empty (* les nœuds ayant disparus: Const *)
+    | AddAff of affectable * expression
 
 
   (* Structure des fonctions dans notre langage *)
@@ -170,6 +171,9 @@ type bloc = instruction list
   | TantQue of expression * bloc
   | Retour of expression
   | Empty (* les nœuds ayant disparus: Const *)
+
+  | AddAffEntier of affectable * expression
+  | AddAffRat of affectable * expression
 
 (* informations associées à l'identificateur (dont son nom), liste des paramètres, corps *)
 type fonction = Fonction of Tds.info_ast * Tds.info_ast list * bloc

@@ -156,6 +156,17 @@ module PasseTypeRat :
             else raise (TypeInattendu (te, t)))
     | AstTds.Empty -> Empty
 
+    | AstTds.AddAff ->  let ne, te = analyse_type_expression e in
+        let naff, taff = analyse_type_affectable aff in
+        (* Crash si le type de l'expression n'est pas compatible avec celui déclaré *)
+        if (est_compatible taff te) then 
+        (* Seuls quelques types peuvent être additionnés *)
+        (match (est_compatible taff) with
+          | f when (f Int) -> AddAffEntier (naff, ne)
+          | f when (f Rat) -> AddAffRat    (naff, ne)
+          | _ -> raise (TypeInattendu (te, taff)))
+        else raise (TypeInattendu (te, taff))
+
   (* analyse_type_bloc : typ option -> AstTds.bloc -> AstType.bloc *)
   (* Paramètre tf : type de retour de la fonction le cas échéant *)
   (* Paramètre li : liste d'instructions à analyser *)
