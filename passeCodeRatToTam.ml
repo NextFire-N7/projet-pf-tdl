@@ -14,13 +14,17 @@ struct
     let rec generer_code_affectable_int modif aff =
       match aff with
       | AstTds.Deref a ->
+          (* Si c'est une deref on va chercher à load (récursivement)
+          jusqu'à l'adresse du heap finale (modif=false) *)
           let code, taille = generer_code_affectable_int false a in
+          (* Puis on load/store le contenu à cette adresse via LOADI/STOREI *)
           if modif then (code ^ "\n" ^ "STOREI (" ^ string_of_int taille ^ ")", 0)
           else (code ^ "\n" ^ "LOADI (" ^ string_of_int taille ^ ")", 1)
       | AstTds.Ident ia -> (
           match info_ast_to_info ia with
           | InfoConst (_, v) ->
               if modif then failwith "on a foiré le typage"
+              (* cste -> LOADL *)
               else ("LOADL " ^ string_of_int v, 0)
           | InfoVar (_, t, _, _) ->
               (* on récupère des données sur la variable *)
@@ -197,7 +201,7 @@ struct
     (* code de la fonction *)
     generer_code_bloc li (get_taille ia) (List.fold_right (fun param taille -> (get_taille param)+taille) lp 0) ^
     (* HALT pour éviter les problèmes avec les fonctions sans retour *)
-    "HALT\n"
+    "HALT\n\n"
 
   (* analyser : AstPlacement.Programme -> string *)
   (* Paramètre : le programme à analyser *)
@@ -212,5 +216,5 @@ struct
     (* Code du main *)
     generer_code_bloc prog 0 0 ^
     (* Fin du programme principal *)
-    "HALT"
+    "HALT\n"
 end
