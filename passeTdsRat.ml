@@ -7,6 +7,7 @@ module PasseTdsRat :
   open Exceptions
   open Ast
   open AstTds
+  open Type
 
   type t1 = Ast.AstSyntax.programme
   type t2 = Ast.AstTds.programme
@@ -25,7 +26,19 @@ module PasseTdsRat :
             | InfoConst _ ->
                 if modif then raise (MauvaiseUtilisationIdentifiant n)
                 else Ident ia
-            | InfoFun _ -> raise (MauvaiseUtilisationIdentifiant n)))
+            | _ -> raise (MauvaiseUtilisationIdentifiant n)))
+
+  let rec analyse_tds_type tds t =
+    match t with
+    | Pointeur t -> Pointeur (analyse_tds_type tds t)
+    | NamedTyp n -> (
+        match chercherGlobalement tds n with
+        | None -> raise (TypeNonDeclare n)
+        | Some ia -> (
+            match info_ast_to_info ia with
+            | InfoTyp (_, t) -> t
+            | _ -> raise (MauvaiseUtilisationIdentifiant n)))
+    | _ -> t
 
   (* analyse_tds_expression : AstSyntax.expression -> AstTds.expression *)
   (* Paramètre tds : la table des symboles courante *)
@@ -81,6 +94,8 @@ module PasseTdsRat :
         | None ->
             (* L'identifiant n'est pas trouvé dans la tds locale,
                il n'a donc pas été déclaré dans le bloc courant *)
+            (* Analyse du type *)
+            let nt = analyse_tds_type tds t in
             (* Vérification de la bonne utilisation des identifiants dans l'expression *)
             (* et obtention de l'expression transformée *)
             let ne = analyse_tds_expression tds e in
@@ -92,7 +107,7 @@ module PasseTdsRat :
             ajouter tds n ia;
             (* Renvoie de la nouvelle déclaration où le nom a été remplacé par l'information
                et l'expression remplacée par l'expression issue de l'analyse *)
-            Declaration (t, ia, ne)
+            Declaration (nt, ia, ne)
         | Some _ ->
             (* L'identifiant est trouvé dans la tds locale,
                il a donc déjà été déclaré dans le bloc courant *)
@@ -140,6 +155,18 @@ module PasseTdsRat :
         (* Analyse de l'expression *)
         let ne = analyse_tds_expression tds e in
         Retour ne
+    | AstSyntax.TypedefLocal (n, t) -> (
+        (* Vérif double déclaration *)
+        match chercherLocalement tds n with
+        | Some _ -> raise (DoubleDeclaration n)
+        | None ->
+            (* Enregistrement du type nommé dans la tds *)
+            let nt = analyse_tds_type tds t in
+            let i = InfoTyp (n, nt) in
+            let ia = info_to_info_ast i in
+            ajouter tds n ia;
+            (* Le noeud ne sert plus *)
+            Empty)
 
   (* analyse_tds_bloc : AstSyntax.bloc -> AstTds.bloc *)
   (* Paramètre tds : la table des symboles courante *)
@@ -175,6 +202,8 @@ module PasseTdsRat :
         (* Création des informations liés aux paramètres, et ajout dans la tds *)
         let nlp =
           let nlp_inner_fun (t, n) =
+            (* analyse du type du paramètre *)
+            let nt = analyse_tds_type tdsparam t in
             let _ =
               (* On vérifie que la paramètre n'a pas été déclaré précédemment *)
               match chercherLocalement tdsparam n with
@@ -184,7 +213,7 @@ module PasseTdsRat :
             let infovar = InfoVar (n, Undefined, 0, "") in
             let astvar = info_to_info_ast infovar in
             ajouter tdsparam n astvar;
-            (t, astvar)
+            (nt, astvar)
           in
           List.map nlp_inner_fun lp
         in
@@ -199,7 +228,9 @@ module PasseTdsRat :
         let nli = analyse_tds_bloc tdsparam li in
         (* Renvoie de la nouvelle fonction où les informations liés
            à la fonction et ses paramètres ont été ajoutés à la tds*)
-        Fonction (t, ia, nlp, nli)
+        (* analyse du type du return *)
+        let nt = analyse_tds_type tdsparam t in
+        Fonction (nt, ia, nlp, nli)
     | Some _ ->
         (* L'identifiant est trouvé dans la tds locale,
            il a donc déjà été déclaré dans le bloc courant *)
@@ -210,8 +241,22 @@ module PasseTdsRat :
   (* Vérifie la bonne utilisation des identifiants et tranforme le programme
      en un programme de type AstTds.ast *)
   (* Erreur si mauvaise utilisation des identifiants *)
-  let analyser (AstSyntax.Programme (fonctions, prog)) =
+  let analyser (AstSyntax.Programme (typedefs, fonctions, prog)) =
     let tds = creerTDSMere () in
+    (* rajout des types nommés en haut de la tds *)
+    let _ =
+      List.map
+        (fun (AstSyntax.TypedefGlobal (n, t)) ->
+          match chercherGlobalement tds n with
+          | Some _ -> raise (DoubleDeclaration n)
+          | None ->
+              (* Résolution du type de base *)
+              let nt = analyse_tds_type tds t in
+              let i = InfoTyp (n, nt) in
+              let ia = info_to_info_ast i in
+              ajouter tds n ia)
+        typedefs
+    in
     let nf = List.map (analyse_tds_fonction tds) fonctions in
     let nb = analyse_tds_bloc tds prog in
     Programme (nf, nb)

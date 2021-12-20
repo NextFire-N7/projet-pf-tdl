@@ -87,13 +87,18 @@ struct
     | TantQue (c,b) -> "TantQue  : TQ "^(string_of_expression c)^"\n"^
                                   "FAIRE \n"^((List.fold_right (fun i tq -> (string_of_instruction i)^tq) b ""))^"\n"
     | Retour (e) -> "Retour  : RETURN "^(string_of_expression e)^"\n"
+    | TypedefLocal (n,t) -> "TypedefLocal  : " ^ n ^ " = " ^ (string_of_type t) ^ "\n"
 
   (* Conversion des fonctions *)
   let string_of_fonction (Fonction(t,n,lp,li)) = (string_of_type t)^" "^n^" ("^((List.fold_right (fun (t,n) tq -> (string_of_type t)^" "^n^" "^tq) lp ""))^") = \n"^
                                         ((List.fold_right (fun i tq -> (string_of_instruction i)^tq) li ""))^"\n"
 
+  (* Conversion des typedefs *)
+  let string_of_typedef (TypedefGlobal(n, t)) = "typedef " ^ n ^ " = " ^ (string_of_type t) ^ "\n"
+
   (* Conversion d'un programme Rat *)
-  let string_of_programme (Programme (fonctions, instruction)) =
+  let string_of_programme (Programme (typedefs, fonctions, instruction)) =
+    (List.fold_right (fun td tq -> (string_of_typedef td)^tq) typedefs "")^
     (List.fold_right (fun f tq -> (string_of_fonction f)^tq) fonctions "")^
     (List.fold_right (fun i tq -> (string_of_instruction i)^tq) instruction "")
 

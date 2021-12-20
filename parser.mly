@@ -40,6 +40,9 @@ open Ast.AstSyntax
 %token AND
 %token NEW
 %token NULL
+// Types nommés
+%token <string> TID
+%token TYPEDEF
 
 (* Type de l'attribut synthétisé des non-terminaux *)
 %type <programme> prog
@@ -52,6 +55,7 @@ open Ast.AstSyntax
 %type <expression> e 
 %type <expression list> cp
 %type <affectable> a
+%type <typedef list> td
 
 (* Type et définition de l'axiome *)
 %start <Ast.AstSyntax.programme> main
@@ -61,8 +65,9 @@ open Ast.AstSyntax
 main : lfi = prog EOF     {lfi}
 
 prog :
-| lf = fonc  lfi = prog   {let (Programme (lf1,li))=lfi in (Programme (lf::lf1,li))}
-| ID li = bloc            {Programme ([],li)}
+// update: types nommés
+| ltd = td  lf = fonc  lfi = prog   {let (Programme (ltd1,lf1,li))=lfi in (Programme (ltd@ltd1,lf::lf1,li))}
+| ID li = bloc            {Programme ([],[],li)}
 
 fonc : t=typ n=ID PO p=dp PF AO li=is AF {Fonction(t,n,p,li)}
 
@@ -80,6 +85,8 @@ i :
 | IF exp=e li1=bloc ELSE li2=bloc   {Conditionnelle (exp,li1,li2)}
 | WHILE exp=e li=bloc               {TantQue (exp,li)}
 | RETURN exp=e PV                   {Retour (exp)}
+// types nommés
+| TYPEDEF n=TID EQUAL t=typ PV      {TypedefLocal (n,t)}
 
 dp :
 |                         {[]}
@@ -90,6 +97,7 @@ typ :
 | INT           {Int}
 | RAT           {Rat}
 | t=typ MULT    {Pointeur (t)}
+| tid=TID       {NamedTyp (tid)}
 
 e : 
 | CALL n=ID PO lp=cp PF   {AppelFonction (n,lp)}
@@ -117,3 +125,8 @@ cp :
 a :
 | n=ID         {Ident (n)}
 | MULT a=a      {Deref (a)}
+
+// Types nommés
+td :
+|                                       {[]}
+| TYPEDEF n=TID EQUAL t=typ PV ltd=td   {(TypedefGlobal (n,t))::ltd}

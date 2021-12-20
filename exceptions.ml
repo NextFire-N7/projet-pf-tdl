@@ -5,6 +5,7 @@ open Ast.AstSyntax
 exception DoubleDeclaration of string 
 exception IdentifiantNonDeclare of string 
 exception MauvaiseUtilisationIdentifiant of string 
+exception TypeNonDeclare of string 
 
 (* Exceptions pour le typage *)
 (* Le premier type est le type réel, le second est le type attendu *)

@@ -35,6 +35,8 @@
       match Hashtbl.find_opt kws id with
       | Some kw -> kw
       | None -> ID id
+
+  let typident tid = TID tid
 }
 
 rule token = parse
@@ -62,6 +64,8 @@ rule token = parse
 | "&"          { AND }
 | "new"        { NEW }
 | "null"       { NULL }
+(* Types nommés *)
+| "typedef"    { TYPEDEF }
 
 (* constantes entières *)
 | ("-")?['0'-'9']+ as i
@@ -69,6 +73,9 @@ rule token = parse
 (* identifiants et mots-clefs *)
 | ['a'-'z'](['A'-'Z''a'-'z''0'-'9']|"-"|"_")* as n
                { ident n }
+(* Types nommés *)
+| ['A'-'Z'](['A'-'Z''a'-'z''0'-'9']|"-"|"_")* as n
+               { typident n }
 
 (* fin de lecture *)
 | eof          { EOF }
