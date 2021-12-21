@@ -66,6 +66,9 @@ rule token = parse
 | "null"       { NULL }
 (* Types nommés *)
 | "typedef"    { TYPEDEF }
+(* Structures *)
+| "struct"     { STRUCT }
+| "."          { DOT }
 
 (* constantes entières *)
 | ("-")?['0'-'9']+ as i

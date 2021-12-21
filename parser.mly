@@ -43,6 +43,9 @@ open Ast.AstSyntax
 // Types nommés
 %token <string> TID
 %token TYPEDEF
+// struct
+%token STRUCT
+%token DOT
 
 (* Type de l'attribut synthétisé des non-terminaux *)
 %type <programme> prog
@@ -95,11 +98,13 @@ dp :
 | t=typ n=ID lp=dp        {(t,n)::lp}
 
 typ :
-| BOOL          {Bool}
-| INT           {Int}
-| RAT           {Rat}
-| t=typ MULT    {Pointeur (t)}
-| tid=TID       {NamedTyp (tid)}
+| BOOL                  {Bool}
+| INT                   {Int}
+| RAT                   {Rat}
+| t=typ MULT            {Pointeur (t)}
+| tid=TID               {NamedTyp (tid)}
+//struct
+| STRUCT AO dp=dp AF    {Struct (dp)}
 
 e : 
 | CALL n=ID PO lp=cp PF   {AppelFonction (n,lp)}
@@ -118,6 +123,7 @@ e :
 | AND n=ID                {Adresse (n)}
 | PO NEW t=typ PF         {New (t)}
 | NULL                    {Null}
+| AO lp=cp AF             {StructExpr(lp)}
 
 cp :
 |               {[]}
@@ -125,8 +131,10 @@ cp :
 
 (* POINTEURS *)
 a :
-| n=ID         {Ident (n)}
-| MULT a=a      {Deref (a)}
+| n=ID                  {Ident (n)}
+| MULT a=a              {Deref (a)}
+// structure
+| PO a=a DOT p=ID PF    {Attribut(a, p)}
 
 // Types nommés
 td :

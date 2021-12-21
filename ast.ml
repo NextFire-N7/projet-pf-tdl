@@ -25,7 +25,7 @@ type unaire = Numerateur | Denominateur
 type binaire = Fraction | Plus | Mult | Equ | Inf
 
 (*pointeurs*)
-type affectable = Ident of string | Deref of affectable
+type affectable = Ident of string | Deref of affectable | Attribut of affectable * string
 
 (* types nommés *)
 (* nom - type *)
@@ -52,6 +52,7 @@ type expression =
   | Null
   (* pointeur sur une nouvelle variable *)
   | New of typ
+  | StructExpr of expression list
 
 (* Instructions de Rat *)
 type bloc = instruction list

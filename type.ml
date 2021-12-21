@@ -1,4 +1,4 @@
-type typ = Bool | Int | Rat | Undefined | Pointeur of typ | NamedTyp of string
+type typ = Bool | Int | Rat | Undefined | Pointeur of typ | NamedTyp of string | Struct of (string * typ) list
 
 let rec string_of_type t = 
   match t with
@@ -8,6 +8,7 @@ let rec string_of_type t =
   | Pointeur t -> "* "^(string_of_type t)
   | Undefined -> "Undefined"
   | NamedTyp n -> n
+  | Struct lnt -> (List.fold_left (fun chaine (n,t) -> chaine ^ " " ^ (string_of_type t) ^ " " ^ n) "{" lnt ) ^ " }"
 
 
 let rec est_compatible t1 t2 =
@@ -20,6 +21,7 @@ let rec est_compatible t1 t2 =
     (* Pointeur null *)
     | _, Undefined -> true
     | _ -> false)
+  | Struct lnt1, Strunct lnt2 -> est_compatible_list (List.map (snd) lnt1) (List.map (snd) lnt2)
   | _ -> false 
 
 let%test _ = est_compatible Bool Bool
