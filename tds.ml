@@ -7,6 +7,7 @@ type info =
   | InfoVar of string * typ * int * string
   | InfoFun of string * typ * typ list
   | InfoTyp of string * typ
+  | InfoAttribut of string * typ * int
 
 (* Données stockées dans la tds  et dans les AST : pointeur sur une information *)
 type info_ast = info ref  
@@ -353,6 +354,8 @@ let%test _ =
     | InfoFun(n,_,_) -> n
     | InfoVar(n,_,_,_) -> n
     | InfoConst(n,_) -> n
+    | InfoTyp(n,_) -> n
+    | InfoAttribut(n,_,_) -> n
 
 let %test _ = get_nom (ref (InfoConst ("const", 42))) = "const"
 let %test _ = get_nom (ref (InfoVar ("var", Rat, 0, ""))) = "var"

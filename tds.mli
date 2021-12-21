@@ -11,6 +11,9 @@ type info =
   | InfoFun of string * typ * typ list
   (* types nommés *)
   | InfoTyp of string * typ
+  (* structures *)
+  (* Information sur un attribut d'une structure, contenant son nom, type et déplacement (positif) dans la mémoire de la structure *)
+  | InfoAttribut of string * typ * int
 
 (* Table des symboles *)
 type tds 
