@@ -367,6 +367,8 @@ let %test _ = get_nom (ref (InfoFun ("fun", Pointeur Int, []))) = "fun"
     | InfoVar (_,t,_,_) -> t
     | InfoFun (_,t,_) -> t
     | InfoConst _ -> Int
+    | InfoAttribut (_,t,_) -> t
+    | InfoTyp (_,t) -> t
     (* | _ -> failwith "Appel get_type pas sur un InfoVar ou InfoFun" *)
 
 let %test _ = get_type (ref (InfoConst ("const", 42))) = Int

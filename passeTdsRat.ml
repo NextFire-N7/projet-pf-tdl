@@ -27,6 +27,12 @@ module PasseTdsRat :
                 if modif then raise (MauvaiseUtilisationIdentifiant n)
                 else Ident ia
             | _ -> raise (MauvaiseUtilisationIdentifiant n)))
+    | AstSyntax.Attribut(aff, n) ->(match chercherGlobalement tds n with
+        | None -> raise (IdentifiantNonDeclare n)
+        | Some ia -> (
+            match info_ast_to_info ia with
+            | InfoAttribut _ -> Attribut(analyse_tds_affectable tds true aff, ia)
+            | _ -> raise (MauvaiseUtilisationIdentifiant n)))
 
   let rec analyse_tds_type tds t =
     match t with
@@ -39,6 +45,32 @@ module PasseTdsRat :
             | InfoTyp (_, t) -> t
             | _ -> raise (MauvaiseUtilisationIdentifiant n)))
     | _ -> t
+
+  let rec analyse_tds_structure tds ltn = 
+    (* On commence par vérifier que les attributs sont soit TOUS présents, soit TOUS absents de la tds *)
+    (* Tout en les ajoutant à la tds *)
+    let rec analyse_tds_attribut tds (t,n) (presence, absence) = (
+        match chercherGlobalement tds n with
+        (* Si un attribut est déjà présent dans la TDS alors on note sa non-absence *)
+        | Some ia -> (match info_ast_to_info ia with
+            | InfoAttribut _ -> (presence, Some(n))
+            | _ -> raise (DoubleDeclaration n))
+        (* Sinon, on l'ajoute et on note sa non présence *)
+        | None -> 
+            let info = InfoAttribut(n,t,0) in
+            let ia = info_to_info_ast info in
+            ajouter tds n ia;
+            (false, absence))
+    in let (presence, absence) = List.fold_left (fun acc el -> analyse_tds_attribut tds el acc) (true, None) ltn
+    in (match presence, absence with
+    (* Tous absents -> OK *)
+    | false, None -> ()
+    (* Tous présents et tous absents -> absurde *)
+    | true, None -> failwith "impossible"
+    (* Ni présents ni absents -> Double déclaration*)
+    | false, Some n -> raise (DoubleDeclaration n)
+    (* Tous présents -> OK *)
+    | _ -> ())
 
   (* analyse_tds_expression : AstSyntax.expression -> AstTds.expression *)
   (* Paramètre tds : la table des symboles courante *)
@@ -80,6 +112,7 @@ module PasseTdsRat :
             | InfoVar _ -> Adresse ia
             | _ -> raise (MauvaiseUtilisationIdentifiant name)))
     | AstSyntax.New typ -> New typ
+    | AstSyntax.StructExpr lp -> StructExpr (List.map (analyse_tds_expression tds) lp)
 
   (* analyse_tds_instruction : AstSyntax.instruction -> tds -> AstTds.instruction *)
   (* Paramètre tds : la table des symboles courante *)
@@ -105,6 +138,9 @@ module PasseTdsRat :
             let ia = info_to_info_ast info in
             (* Ajout de l'information (pointeur) dans la tds *)
             ajouter tds n ia;
+            (* Si l'on déclare une structure, l'on veut également vérifier celle-ci *)
+            (match nt with | Struct ltn -> analyse_tds_structure tds ltn 
+            | _ -> ());
             (* Renvoie de la nouvelle déclaration où le nom a été remplacé par l'information
                et l'expression remplacée par l'expression issue de l'analyse *)
             Declaration (nt, ia, ne)

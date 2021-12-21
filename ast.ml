@@ -94,7 +94,7 @@ end
 module AstTds =
 struct
 
-  type affectable = Ident of Tds.info_ast | Deref of affectable
+  type affectable = Ident of Tds.info_ast | Deref of affectable | Attribut of affectable * Tds.info_ast
 
   (* Expressions existantes dans notre langage *)
   (* ~ expression de l'AST syntaxique où les noms des identifiants ont été
@@ -110,6 +110,8 @@ struct
     | Adresse of Tds.info_ast
     | Null
     | New of typ
+    (* structures *)
+    | StructExpr of expression list
 
   (* instructions existantes dans notre langage *)
   (* ~ instruction de l'AST syntaxique où les noms des identifiants ont été
