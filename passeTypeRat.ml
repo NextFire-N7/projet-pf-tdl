@@ -33,6 +33,7 @@ module PasseTypeRat :
           | _ -> raise (DereferenceNonPointeur taff))
       (* Si c'est un identifiant, on retourne le type de l'identifiant. *)
       | AstTds.Ident ia -> get_type ia
+      | AstTds.Attribut (_, ia) -> get_type ia
     in
     (a, t)
 
@@ -57,8 +58,7 @@ module PasseTypeRat :
         let nle = List.map fst nlet in
         let nlt = List.map snd nlet in
         (* Si les types sont conformes, on peut continuer et le type de l'expression est le type de retour de la fonction. *)
-        (* TODO: Utiliser est_compatible *)
-        if tpara = nlt then (AppelFonction (ia, nle), tr)
+        if est_compatible_list tpara nlt then (AppelFonction (ia, nle), tr)
         else raise (TypesParametresInattendus (nlt, tpara))
     | AstTds.Affectable aff ->
         let naff, taff = analyse_type_affectable aff in
@@ -100,6 +100,9 @@ module PasseTypeRat :
           | _ -> raise (TypeBinaireInattendu (f, te1, te2))
         in
         (Binaire (n_binaire, ne1, ne2), tr)
+      | AstTds.StructExpr lp -> let nlp, lt = List.split (List.map (analyse_type_expression) lp) in 
+        let nlt = List.map (fun t -> t,"") lt in 
+        (StructExpr nlp, Struct nlt)
 
   (* analyse_type_instruction : typ option -> AstTds.instruction -> AstType.instruction *)
   (* Paramètre tf : le type de retour de la fonction le cas échéant *)

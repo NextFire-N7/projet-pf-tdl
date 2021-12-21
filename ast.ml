@@ -167,6 +167,8 @@ type expression =
   | Adresse of Tds.info_ast
   | Null
   | New of typ
+  (* Structures *)
+  | StructExpr of expression list
 
 (* instructions existantes Rat *)
 (* = instruction de AstTds + informations associées aux identificateurs, mises à jour *)
