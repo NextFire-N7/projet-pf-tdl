@@ -37,6 +37,12 @@ struct
               in
               (code, getTaille t)
           | _ -> failwith "on a foiré le typage")
+      | AstTds.Attribut (aff,ia) -> let code_attribut = (
+        match info_ast_to_info ia with
+        | InfoAttribut(t,n,dep) -> 
+          let depth = List.fold_right (fun  d) (* TODO: pas fini *)
+          let code_action = if modif then "STORE" else 
+      )
     in let code, _ = generer_code_affectable_int modif aff in
     code
 
