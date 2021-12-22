@@ -100,8 +100,9 @@ module PasseTypeRat :
           | _ -> raise (TypeBinaireInattendu (f, te1, te2))
         in
         (Binaire (n_binaire, ne1, ne2), tr)
-      | AstTds.StructExpr lp -> let nlp, lt = List.split (List.map (analyse_type_expression) lp) in 
-        let nlt = List.map (fun t -> t,"") lt in 
+    | AstTds.StructExpr lp ->
+        let nlp, lt = List.split (List.map analyse_type_expression lp) in
+        let nlt = List.map (fun t -> (t, "")) lt in
         (StructExpr nlp, Struct nlt)
 
   (* analyse_type_instruction : typ option -> AstTds.instruction -> AstType.instruction *)
@@ -158,16 +159,16 @@ module PasseTypeRat :
             if est_compatible t te then Retour ne
             else raise (TypeInattendu (te, t)))
     | AstTds.Empty -> Empty
-
-    | AstTds.AddAff (aff, e) ->  let ne, te = analyse_type_expression e in
+    | AstTds.AddAff (aff, e) ->
+        let ne, te = analyse_type_expression e in
         let naff, taff = analyse_type_affectable aff in
         (* Crash si le type de l'expression n'est pas compatible avec celui déclaré *)
-        if (est_compatible taff te) then 
-        (* Seuls quelques types peuvent être additionnés *)
-        (match (est_compatible taff) with
-          | f when (f Int) -> AddAffEntier (naff, ne)
-          | f when (f Rat) -> AddAffRat    (naff, ne)
-          | _ -> raise (TypeInattendu (te, taff)))
+        if est_compatible taff te then
+          (* Seuls quelques types peuvent être additionnés *)
+          match est_compatible taff with
+          | f when f Int -> AddAffEntier (naff, ne)
+          | f when f Rat -> AddAffRat (naff, ne)
+          | _ -> raise (TypeInattendu (te, taff))
         else raise (TypeInattendu (te, taff))
 
   (* analyse_type_bloc : typ option -> AstTds.bloc -> AstType.bloc *)

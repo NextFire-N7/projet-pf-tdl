@@ -1,4 +1,11 @@
-type typ = Bool | Int | Rat | Undefined | Pointeur of typ | NamedTyp of string | Struct of (typ * string) list
+type typ =
+  | Bool
+  | Int
+  | Rat
+  | Undefined
+  | Pointeur of typ
+  | NamedTyp of string
+  | Struct of (typ * string) list
 
 let rec string_of_type t = 
   match t with
