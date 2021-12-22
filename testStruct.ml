@@ -26,3 +26,32 @@ exception ErreurNonDetectee
 let%expect_test "exemple1" =
   runtam "../../fichiersRat/test-struct/exemple1.rat";
   [%expect{| 3[1/4] |}]
+
+let%expect_test "exemple2" =
+  runtam "../../fichiersRat/test-struct/exemple2.rat";
+  [%expect{| 4835 |}]
+
+let%expect_test "exemple3" =
+  runtam "../../fichiersRat/test-struct/exemple3.rat";
+  [%expect{| 12 |}]
+
+(* let%expect_test "exemple4-double-decl" =
+  runtam "../../fichiersRat/test-struct/exemple4-double-decl.rat";
+  [%expect.unreachable] *)
+  
+(* let%expect_test "exemple5-double-decl" =
+  runtam "../../fichiersRat/test-struct/exemple5-double-decl.rat";
+  [%expect.unreachable] *)
+  
+let%expect_test "exemple6" =
+  runtam "../../fichiersRat/test-struct/exemple6.rat";
+  [%expect{| 3 |}]
+  
+(* let%expect_test "exemple7-mauvaise-util" =
+  runtam "../../fichiersRat/test-struct/exemple7-mauvaise-util.rat";
+  [%expect.unreachable] *)
+  
+let%expect_test "exemple8-bonus" =
+  runtam "../../fichiersRat/test-struct/exemple8-bonus.rat";
+  [%expect{| 123 |}]
+  
