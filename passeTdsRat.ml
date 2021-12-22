@@ -263,6 +263,10 @@ module PasseTdsRat :
             let infovar = InfoVar (n, Undefined, 0, "") in
             let astvar = info_to_info_ast infovar in
             ajouter tdsparam n astvar;
+            (* Si l'on déclare une structure, l'on veut également vérifier celle-ci *)
+            (match nt with
+            | Struct ltn -> analyse_tds_structure tdsparam ltn
+            | _ -> ());
             (nt, astvar)
           in
           List.map nlp_inner_fun lp
