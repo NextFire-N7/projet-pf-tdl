@@ -49,6 +49,6 @@ let%expect_test "exemple7-mauvaise-util" =
   try runtam "../../fichiersRat/test-struct/exemple7-mauvaise-util.rat"
   with MauvaiseUtilisationIdentifiant "x" -> ()
 
-let%expect_test "exemple8-bonus" =
+(* let%expect_test "exemple8-bonus" =
   runtam "../../fichiersRat/test-struct/exemple8-bonus.rat";
-  [%expect {| 123 |}]
+  [%expect {| 123 |}] *)

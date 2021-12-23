@@ -27,12 +27,11 @@ module PassePlacementRat :
           (* Place la variable à l'adresse dep du registre reg *)
           modifier_adresse_info dep reg ia;
           let _ =
-            List.fold_left
-              (fun depl ia ->
+            List.fold_right
+              (fun ia depl ->
                 modifier_adresse_info depl reg ia;
-                let t = getTaille (get_type ia) in
-                depl + t)
-              0 attrs
+                depl + getTaille (get_type ia))
+              attrs dep
           in
           (* renvoie la taille du type déclaré *)
           getTaille (get_type ia)
@@ -47,8 +46,8 @@ module PassePlacementRat :
           analyse_placement_bloc reg dep b;
           0
       | _ -> 0
+      (* nouvelle inc (pour la prochaine déclaration) *)
     in
-    (* nouvelle profondeur (pour la prochaine déclaration) *)
     dep + inc
 
   (* analyse_placement_params: int -> info_ast list -> unit = <fun> *)
@@ -59,13 +58,8 @@ module PassePlacementRat :
        - li: instruction list = la liste des instructions dont on va gérer la placement mémoire
      Retour: unit *)
   and analyse_placement_bloc reg dep li =
-    match li with
-    | [] -> ()
-    | i :: q ->
-        (* On gère le placement mémoire de l'instruction et on récupère le nouveau déplacement *)
-        let ndep = analyse_placement_instruction reg dep i in
-        (* On analyse le reste du bloc avec ce nouveau déplacement *)
-        analyse_placement_bloc reg ndep q
+    let _ = List.fold_left (analyse_placement_instruction reg) dep li in
+    ()
 
   (* analyse_placement_fonction: AstType.Fonction -> AstPlacement.Fonction = <fun> *)
   (* Par effet de bord, gère le placement mémoire des paramètres et des variables du bloc de la fonction *)
@@ -78,24 +72,26 @@ module PassePlacementRat :
   (* analyse_placement_params: int -> info_ast list -> unit = <fun> *)
   (* Place les paramètres en mémoire par effet de bord.
      Params:
-        - dep: int = le déplacement de base de notre paramètre
+        - depb: int = le déplacement de base de notre paramètre
         - lp: info_ast list = la liste des paramètres à placer dans la mémoire
      Retour: unit *)
-  and analyse_placement_params dep lp =
-    match lp with
-    | [] -> ()
-    | Param (ia, attrs) :: q ->
-        let t = getTaille (get_type ia) in
-        modifier_adresse_info (dep - t) "LB" ia;
-        let _ =
-          List.fold_right
-            (fun ia dep ->
-              modifier_adresse_info dep "LB" ia;
-              let t = getTaille (get_type ia) in
-              dep + t)
-            (List.rev attrs) 0
-        in
-        analyse_placement_params (dep - t) q
+  and analyse_placement_params depb lp =
+    let _ =
+      List.fold_left
+        (fun dep (AstType.Param (ia, attrs)) ->
+          let t = getTaille (get_type ia) in
+          modifier_adresse_info (dep - t) "LB" ia;
+          let _ =
+            List.fold_right
+              (fun ia depl ->
+                modifier_adresse_info depl "LB" ia;
+                depl + getTaille (get_type ia))
+              attrs (dep - t)
+          in
+          dep - t)
+        depb lp
+    in
+    ()
 
   (* analyser : AstType.Programme -> AstPlacement.Programme *)
   (* Paramètre : le programme à analyser *)
