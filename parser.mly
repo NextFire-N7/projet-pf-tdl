@@ -132,7 +132,7 @@ cp :
 (* POINTEURS *)
 a :
 | n=ID                  {Ident (n)}
-| MULT a=a              {Deref (a)}
+| PO MULT a=a PF        {Deref (a)}
 // structure
 | PO a=a DOT p=ID PF    {Attribut(a, p)}
 
