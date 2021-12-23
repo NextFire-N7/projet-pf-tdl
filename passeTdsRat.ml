@@ -32,8 +32,7 @@ module PasseTdsRat :
         | None -> raise (IdentifiantNonDeclare n)
         | Some ia -> (
             match info_ast_to_info ia with
-            | InfoAttribut _ ->
-                Attribut (analyse_tds_affectable tds true aff, ia)
+            | InfoVar _ -> Attribut (analyse_tds_affectable tds true aff, ia)
             | _ -> raise (MauvaiseUtilisationIdentifiant n)))
 
   let rec analyse_tds_type tds t =
@@ -51,34 +50,34 @@ module PasseTdsRat :
   let rec analyse_tds_structure tds ltn =
     (* On commence par vérifier que les attributs sont soit TOUS présents, soit TOUS absents de la tds *)
     (* Tout en les ajoutant à la tds *)
-    let rec analyse_tds_attribut tds (t, n) (presence, absence) =
+    let rec analyse_tds_attribut tds (t, n) (presence, absence, attrs) =
       match chercherGlobalement tds n with
       (* Si un attribut est déjà présent dans la TDS alors on note sa non-absence *)
       | Some ia -> (
           match info_ast_to_info ia with
-          | InfoAttribut _ -> (presence, Some n)
+          | InfoVar _ -> (presence, Some n, attrs)
           | _ -> raise (DoubleDeclaration n))
       (* Sinon, on l'ajoute et on note sa non présence *)
       | None ->
-          let info = InfoAttribut (n, t, 0) in
+          let info = InfoVar (n, Undefined, 0, "") in
           let ia = info_to_info_ast info in
           ajouter tds n ia;
-          (false, absence)
+          (false, absence, (t, ia) :: attrs)
     in
-    let presence, absence =
+    let presence, absence, attrs =
       List.fold_left
         (fun acc el -> analyse_tds_attribut tds el acc)
-        (true, None) ltn
+        (true, None, []) ltn
     in
     match (presence, absence) with
     (* Tous absents -> OK *)
-    | false, None -> ()
+    | false, None -> attrs
     (* Tous présents et tous absents -> absurde *)
     | true, None -> failwith "impossible"
     (* Ni présents ni absents -> Double déclaration*)
     | false, Some n -> raise (DoubleDeclaration n)
     (* Tous présents -> OK *)
-    | _ -> ()
+    | _ -> attrs
 
   (* analyse_tds_expression : AstSyntax.expression -> AstTds.expression *)
   (* Paramètre tds : la table des symboles courante *)
@@ -148,12 +147,14 @@ module PasseTdsRat :
             (* Ajout de l'information (pointeur) dans la tds *)
             ajouter tds n ia;
             (* Si l'on déclare une structure, l'on veut également vérifier celle-ci *)
-            (match nt with
-            | Struct ltn -> analyse_tds_structure tds ltn
-            | _ -> ());
+            let attrs =
+              match nt with
+              | Struct ltn -> analyse_tds_structure tds ltn
+              | _ -> []
+            in
             (* Renvoie de la nouvelle déclaration où le nom a été remplacé par l'information
                et l'expression remplacée par l'expression issue de l'analyse *)
-            Declaration (nt, ia, ne)
+            Declaration (nt, ia, ne, attrs)
         | Some _ ->
             (* L'identifiant est trouvé dans la tds locale,
                il a donc déjà été déclaré dans le bloc courant *)
@@ -264,15 +265,19 @@ module PasseTdsRat :
             let astvar = info_to_info_ast infovar in
             ajouter tdsparam n astvar;
             (* Si l'on déclare une structure, l'on veut également vérifier celle-ci *)
-            (match nt with
-            | Struct ltn -> analyse_tds_structure tdsparam ltn
-            | _ -> ());
-            (nt, astvar)
+            let attrs =
+              match nt with
+              | Struct ltn -> analyse_tds_structure tdsparam ltn
+              | _ -> []
+            in
+            Param (nt, astvar, attrs)
           in
           List.map nlp_inner_fun lp
         in
         (* Création de l'information associée à l'identfiant *)
-        let info = InfoFun (n, Undefined, List.map fst nlp) in
+        let info =
+          InfoFun (n, Undefined, List.map (fun (Param (t, _, _)) -> t) nlp)
+        in
         (* Création du pointeur sur l'information *)
         let ia = info_to_info_ast info in
         (* Ajout du pointeur dans la TDS (pour la récursivité)*)

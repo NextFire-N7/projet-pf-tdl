@@ -23,9 +23,17 @@ module PassePlacementRat :
     let inc =
       match i with
       (* Déclaration: il faut réserver la place de la nouvelle variable *)
-      | AstType.Declaration (ia, _) ->
+      | AstType.Declaration (ia, _, attrs) ->
           (* Place la variable à l'adresse dep du registre reg *)
           modifier_adresse_info dep reg ia;
+          let _ =
+            List.fold_left
+              (fun depl ia ->
+                modifier_adresse_info depl reg ia;
+                let t = getTaille (get_type ia) in
+                depl + t)
+              0 attrs
+          in
           (* renvoie la taille du type déclaré *)
           getTaille (get_type ia)
       | AstType.Conditionnelle (_, bt, be) ->
@@ -61,9 +69,10 @@ module PassePlacementRat :
 
   (* analyse_placement_fonction: AstType.Fonction -> AstPlacement.Fonction = <fun> *)
   (* Par effet de bord, gère le placement mémoire des paramètres et des variables du bloc de la fonction *)
-  let rec analyse_placement_fonction (AstType.Fonction (ia, liap, li)) =
-    analyse_placement_params 0 (List.rev liap);
+  let rec analyse_placement_fonction (AstType.Fonction (ia, params, li)) =
+    analyse_placement_params 0 (List.rev params);
     analyse_placement_bloc "LB" 3 li;
+    let liap = List.map (fun (AstType.Param (ia, _)) -> ia) params in
     Fonction (ia, liap, li)
 
   (* analyse_placement_params: int -> info_ast list -> unit = <fun> *)
@@ -75,9 +84,17 @@ module PassePlacementRat :
   and analyse_placement_params dep lp =
     match lp with
     | [] -> ()
-    | ia :: q ->
+    | Param (ia, attrs) :: q ->
         let t = getTaille (get_type ia) in
         modifier_adresse_info (dep - t) "LB" ia;
+        let _ =
+          List.fold_right
+            (fun ia dep ->
+              modifier_adresse_info dep "LB" ia;
+              let t = getTaille (get_type ia) in
+              dep + t)
+            (List.rev attrs) 0
+        in
         analyse_placement_params (dep - t) q
 
   (* analyser : AstType.Programme -> AstPlacement.Programme *)

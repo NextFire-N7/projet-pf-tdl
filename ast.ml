@@ -119,7 +119,7 @@ struct
   + suppression de nœuds (const) *)
   type bloc = instruction list
   and instruction =
-    | Declaration of typ * Tds.info_ast * expression (* le nom de l'identifiant est remplacé par ses informations *)
+    | Declaration of typ * Tds.info_ast * expression * (typ * Tds.info_ast) list (* le nom de l'identifiant est remplacé par ses informations *)
     | Affectation of affectable * expression (* le nom de l'identifiant est remplacé par ses informations *)
     | Affichage of expression
     | Conditionnelle of expression * bloc * bloc
@@ -131,7 +131,8 @@ struct
 
   (* Structure des fonctions dans notre langage *)
   (* type de retour - informations associées à l'identificateur (dont son nom) - liste des paramètres (association type et information sur les paramètres) - corps de la fonction *)
-  type fonction = Fonction of typ * Tds.info_ast * (typ * Tds.info_ast ) list * bloc
+  type param = Param of typ * Tds.info_ast * (typ * Tds.info_ast) list
+  type fonction = Fonction of typ * Tds.info_ast * param list * bloc
 
   (* Structure d'un programme dans notre langage *)
   type programme = Programme of fonction list * bloc
@@ -175,7 +176,7 @@ type expression =
 (* + résolution de la surcharge de l'affichage *)
 type bloc = instruction list
  and instruction =
-  | Declaration of Tds.info_ast * expression
+  | Declaration of Tds.info_ast * expression * Tds.info_ast list
   | Affectation of AstTds.affectable * expression
   | AffichageInt of expression
   | AffichageRat of expression
@@ -189,14 +190,15 @@ type bloc = instruction list
   | AddAffRat of affectable * expression
 
 (* informations associées à l'identificateur (dont son nom), liste des paramètres, corps *)
-type fonction = Fonction of Tds.info_ast * Tds.info_ast list * bloc
+type param = Param of Tds.info_ast * Tds.info_ast list
+type fonction = Fonction of Tds.info_ast * param list * bloc
 
 (* Structure d'un programme dans notre langage *)
 type programme = Programme of fonction list * bloc
 
 let taille_variables_declarees i =
   match i with
-  | Declaration (info,_) ->
+  | Declaration (info,_,_) ->
     begin
     match Tds.info_ast_to_info info with
     | InfoVar (_,t,_,_) -> getTaille t

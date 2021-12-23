@@ -113,11 +113,12 @@ module PasseTypeRat :
   (* Erreur si mauvaise utilisation des identifiants *)
   let rec analyse_type_instruction tf i =
     match i with
-    | AstTds.Declaration (t, ia, e) ->
+    | AstTds.Declaration (t, ia, e, attrs) ->
         modifier_type_info t ia;
+        let _ = List.map (fun (t, ia) -> modifier_type_info t ia) attrs in
         (* Crash si le type de l'expression n'est pas compatible avec celui déclaré *)
         let ne, te = analyse_type_expression e in
-        if est_compatible t te then Declaration (ia, ne)
+        if est_compatible t te then Declaration (ia, ne, List.map snd attrs)
         else raise (TypeInattendu (te, t))
     | AstTds.Affectation (aff, e) ->
         let ne, te = analyse_type_expression e in
@@ -186,16 +187,27 @@ module PasseTypeRat :
   (* Erreur si mauvais typage des identifiants *)
   let analyse_type_fonction (AstTds.Fonction (t, ia, lp, li)) =
     (* On enregistre le type attendu des paramètres *)
-    let _ = List.map (fun (t, ia) -> modifier_type_info t ia) lp in
+    let _ =
+      List.map
+        (fun (AstTds.Param (t, ia, attrs)) ->
+          modifier_type_info t ia;
+          let _ = List.map (fun (t, ia) -> modifier_type_info t ia) attrs in
+          ())
+        lp
+    in
     (* type des paramètes *)
-    let ltp = List.map fst lp in
-    (* info_ast des paramètres *)
-    let liap = List.map snd lp in
-    (* On enregistre le type de retour dans l'info de la fonction *)
+    let ltp = List.map (fun (AstTds.Param (t, _, _)) -> t) lp in
+    (* On enregistre le type de retour et des params dans l'info de la fonction *)
     modifier_type_fonction_info t ltp ia;
     (* On analyse le bloc de la fonction en précisant le type de retour attendu *)
     let nli = analyse_type_bloc (Some t) li in
-    Fonction (ia, liap, nli)
+    (* params *)
+    let params =
+      List.map
+        (fun (AstTds.Param (_, ia, attrs)) -> Param (ia, List.map snd attrs))
+        lp
+    in
+    Fonction (ia, params, nli)
 
   (* analyser : AstTds.Programme -> AstType.Programme *)
   (* Paramètre : le programme à analyser *)

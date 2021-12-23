@@ -44,7 +44,7 @@ struct
           | _ -> failwith "on a foiré le typage")
       | AstTds.Attribut (a, ia) -> (
         match info_ast_to_info ia with
-        | InfoAttribut (_, t, o) -> generer_code_affectable_int modif a o (Some (getTaille t))
+        | InfoVar (_, t, o, _) -> generer_code_affectable_int modif a o (Some (getTaille t))
         | _ -> failwith "on a foiré le typage")
     in let code, _ = generer_code_affectable_int modif aff 0 None in
     code
@@ -134,7 +134,7 @@ struct
   let rec generer_code_instruction i taille_retour taille_params =
     let code, taille =
       match i with
-      | AstType.Declaration (ia, e) ->
+      | AstType.Declaration (ia, e, _) ->
           let taille_int = get_taille ia in
           (* get_var_data renvoie la taille, l'adresse et le registre de la variable sous forme de strings *)
           let taille, addr, reg = get_var_data ia in

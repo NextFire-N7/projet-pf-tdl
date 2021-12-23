@@ -7,7 +7,6 @@ type info =
   | InfoVar of string * typ * int * string
   | InfoFun of string * typ * typ list
   | InfoTyp of string * typ
-  | InfoAttribut of string * typ * int
 
 (* Données stockées dans la tds  et dans les AST : pointeur sur une information *)
 type info_ast = info ref  
@@ -289,6 +288,7 @@ let string_of_info info =
   | InfoVar (n,t,dep,base) -> "Variable "^n^" : "^(string_of_type t)^" "^(string_of_int dep)^"["^base^"]"
   | InfoFun (n,t,tp) -> "Fonction "^n^" : "^(List.fold_right (fun elt tq -> if tq = "" then (string_of_type elt) else (string_of_type elt)^" * "^tq) tp "" )^
                       " -> "^(string_of_type t)
+  | InfoTyp (n,t) -> "Type "^n^" : "^(string_of_type t)
 
 (* Affiche la tds locale *)
 let afficher_locale tds =
@@ -355,7 +355,6 @@ let%test _ =
     | InfoVar(n,_,_,_) -> n
     | InfoConst(n,_) -> n
     | InfoTyp(n,_) -> n
-    | InfoAttribut(n,_,_) -> n
 
 let %test _ = get_nom (ref (InfoConst ("const", 42))) = "const"
 let %test _ = get_nom (ref (InfoVar ("var", Rat, 0, ""))) = "var"
@@ -367,7 +366,6 @@ let %test _ = get_nom (ref (InfoFun ("fun", Pointeur Int, []))) = "fun"
     | InfoVar (_,t,_,_) -> t
     | InfoFun (_,t,_) -> t
     | InfoConst _ -> Int
-    | InfoAttribut (_,t,_) -> t
     | InfoTyp (_,t) -> t
     (* | _ -> failwith "Appel get_type pas sur un InfoVar ou InfoFun" *)
 
