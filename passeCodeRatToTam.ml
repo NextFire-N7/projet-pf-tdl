@@ -11,24 +11,28 @@ struct
   type t2 = string
 
   let generer_code_affectable modif aff =
-    let rec generer_code_affectable_int modif aff =
+    let rec generer_code_affectable_int modif aff offset size =
       match aff with
       | AstTds.Deref a ->
           (* Si c'est une deref on va chercher à load (récursivement)
-          jusqu'à l'adresse du heap finale (modif=false) *)
-          let code, taille = generer_code_affectable_int false a in
+             jusqu'à l'adresse du heap finale (modif=false) *)
+          let code, taille = generer_code_affectable_int false a offset size in
           (* Puis on load/store le contenu à cette adresse via LOADI/STOREI *)
-          if modif then (code ^ "\n" ^ "STOREI (" ^ string_of_int taille ^ ")", 0)
+          if modif then
+            (code ^ "\n" ^ "STOREI (" ^ string_of_int taille ^ ")", 0)
           else (code ^ "\n" ^ "LOADI (" ^ string_of_int taille ^ ")", 1)
       | AstTds.Ident ia -> (
           match info_ast_to_info ia with
           | InfoConst (_, v) ->
-              if modif then failwith "on a foiré le typage"
-              (* cste -> LOADL *)
+              if modif then failwith "on a foiré le typage" (* cste -> LOADL *)
               else ("LOADL " ^ string_of_int v, 0)
-          | InfoVar (_, t, _, _) ->
+          | InfoVar (_, t, a, reg) ->
               (* on récupère des données sur la variable *)
-              let str_taille, str_add, reg = get_var_data ia in
+              let str_taille =
+                string_of_int
+                  (match size with Some s -> s | None -> getTaille t)
+              in
+              let str_add = string_of_int (a + offset) in
               (* Et on la charge sur la stack *)
               let code =
                 if modif then
@@ -37,8 +41,13 @@ struct
               in
               (code, getTaille t)
           | _ -> failwith "on a foiré le typage")
-      | AstTds.Attribut (_, ia) -> generer_code_affectable_int modif (AstTds.Ident ia)
-    in let code, _ = generer_code_affectable_int modif aff in
+      | AstTds.Attribut (a, ia) -> (
+          match info_ast_to_info ia with
+          | InfoVar (_, t, o, _) ->
+              generer_code_affectable_int modif a o (Some (getTaille t))
+          | _ -> failwith "on a foiré le typage")
+    in
+    let code, _ = generer_code_affectable_int modif aff 0 None in
     code
 
   let generer_code_addaff aff expr_add_code taille = 

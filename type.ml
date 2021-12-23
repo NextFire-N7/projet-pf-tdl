@@ -76,7 +76,8 @@ let rec getTaille t =
   | Rat -> 2
   | Undefined -> 0
   | Pointeur _ -> 1
-  | Struct ltn -> List.fold_left (fun taille (t,n) -> taille + getTaille t) 0 ltn
+  | Struct ltn -> List.fold_left (fun taille (t,_) -> taille + getTaille t) 0 ltn
+  | _ -> failwith "unexpected type"
   
 let%test _ = getTaille Int = 1
 let%test _ = getTaille Bool = 1

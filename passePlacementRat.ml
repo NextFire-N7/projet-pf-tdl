@@ -26,12 +26,13 @@ module PassePlacementRat :
       | AstType.Declaration (ia, _, attrs) ->
           (* Place la variable à l'adresse dep du registre reg *)
           modifier_adresse_info dep reg ia;
+          (* offset (relatif) des attributs le cas échéant *)
           let _ =
             List.fold_right
               (fun ia depl ->
                 modifier_adresse_info depl reg ia;
                 depl + getTaille (get_type ia))
-              attrs dep
+              attrs 0
           in
           (* renvoie la taille du type déclaré *)
           getTaille (get_type ia)
@@ -46,8 +47,8 @@ module PassePlacementRat :
           analyse_placement_bloc reg dep b;
           0
       | _ -> 0
-      (* nouvelle inc (pour la prochaine déclaration) *)
     in
+    (* nouvelle dep (pour la prochaine déclaration) *)
     dep + inc
 
   (* analyse_placement_params: int -> info_ast list -> unit = <fun> *)
@@ -81,12 +82,13 @@ module PassePlacementRat :
         (fun dep (AstType.Param (ia, attrs)) ->
           let t = getTaille (get_type ia) in
           modifier_adresse_info (dep - t) "LB" ia;
+          (* offset (relatif) des attributs le cas échéant *)
           let _ =
             List.fold_right
               (fun ia depl ->
                 modifier_adresse_info depl "LB" ia;
                 depl + getTaille (get_type ia))
-              attrs (dep - t)
+              attrs 0
           in
           dep - t)
         depb lp
