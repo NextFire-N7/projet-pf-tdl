@@ -32,7 +32,7 @@ module PasseTdsRat :
         | None -> raise (IdentifiantNonDeclare n)
         | Some ia -> (
             match info_ast_to_info ia with
-            | InfoVar _ -> Attribut (analyse_tds_affectable tds true aff, ia)
+            | InfoAttr _ -> Attribut (analyse_tds_affectable tds true aff, ia)
             | _ -> raise (MauvaiseUtilisationIdentifiant n)))
 
   let rec analyse_tds_type tds t =
@@ -55,11 +55,11 @@ module PasseTdsRat :
       (* Si un attribut est déjà présent dans la TDS alors on note sa non-absence *)
       | Some ia -> (
           match info_ast_to_info ia with
-          | InfoVar _ -> (presence, Some n, attrs)
+          | InfoAttr _ -> (presence, Some n, attrs)
           | _ -> raise (DoubleDeclaration n))
       (* Sinon, on l'ajoute et on note sa non présence *)
       | None ->
-          let info = InfoVar (n, Undefined, 0, "") in
+          let info = InfoAttr (n, Undefined, 0) in
           let ia = info_to_info_ast info in
           ajouter tds n ia;
           (false, absence, (t, ia) :: attrs)

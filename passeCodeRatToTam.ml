@@ -43,7 +43,7 @@ struct
           | _ -> failwith "on a foiré le typage")
       | AstTds.Attribut (a, ia) -> (
           match info_ast_to_info ia with
-          | InfoVar (_, t, o, _) ->
+          | InfoAttr (_, t, o) ->
               generer_code_affectable_int modif a o (Some (getTaille t))
           | _ -> failwith "on a foiré le typage")
     in

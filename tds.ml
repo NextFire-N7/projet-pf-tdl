@@ -7,6 +7,7 @@ type info =
   | InfoVar of string * typ * int * string
   | InfoFun of string * typ * typ list
   | InfoTyp of string * typ
+  | InfoAttr of string * typ * int
 
 (* Données stockées dans la tds  et dans les AST : pointeur sur une information *)
 type info_ast = info ref  
@@ -289,6 +290,7 @@ let string_of_info info =
   | InfoFun (n,t,tp) -> "Fonction "^n^" : "^(List.fold_right (fun elt tq -> if tq = "" then (string_of_type elt) else (string_of_type elt)^" * "^tq) tp "" )^
                       " -> "^(string_of_type t)
   | InfoTyp (n,t) -> "Type "^n^" : "^(string_of_type t)
+  | InfoAttr (n,t,dep) -> "Attribut "^n^" : "^(string_of_type t)^" "^(string_of_int dep)
 
 (* Affiche la tds locale *)
 let afficher_locale tds =
@@ -310,7 +312,8 @@ let afficher_globale tds =
   let modifier_type_info t i =
     match !i with
     |InfoVar (n,_,dep,base) -> i:= InfoVar (n,t,dep,base)
-    | _ -> failwith "Appel modifier_type_info pas sur un InfoVar"
+    |InfoAttr (n,_,dep) -> i:= InfoAttr (n,t,dep)
+    | _ -> failwith "Appel modifier_type_info pas sur un InfoVar/InfoAttr"
 
 let%test _ = 
   let info = InfoVar ("x", Undefined, 4 , "SB") in
@@ -338,6 +341,7 @@ let%test _ =
  let modifier_adresse_info d b i =
      match !i with
      |InfoVar (n,t,_,_) -> i:= InfoVar (n,t,d,b)
+      |InfoAttr (n,t,_) -> i:= InfoAttr (n,t,d)
      | _ -> failwith "Appel modifier_adresse_info pas sur un InfoVar"
 
 let%test _ = 
@@ -355,6 +359,7 @@ let%test _ =
     | InfoVar(n,_,_,_) -> n
     | InfoConst(n,_) -> n
     | InfoTyp(n,_) -> n
+    | InfoAttr(n,_,_) -> n
 
 let %test _ = get_nom (ref (InfoConst ("const", 42))) = "const"
 let %test _ = get_nom (ref (InfoVar ("var", Rat, 0, ""))) = "var"
@@ -367,6 +372,7 @@ let %test _ = get_nom (ref (InfoFun ("fun", Pointeur Int, []))) = "fun"
     | InfoFun (_,t,_) -> t
     | InfoConst _ -> Int
     | InfoTyp (_,t) -> t
+    | InfoAttr(_,t,_) -> t
     (* | _ -> failwith "Appel get_type pas sur un InfoVar ou InfoFun" *)
 
 let %test _ = get_type (ref (InfoConst ("const", 42))) = Int
