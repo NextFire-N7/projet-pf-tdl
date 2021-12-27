@@ -1,4 +1,11 @@
-type typ = Bool | Int | Rat | Undefined | Pointeur of typ | NamedTyp of string
+type typ =
+  | Bool
+  | Int
+  | Rat
+  | Undefined
+  | Pointeur of typ
+  | NamedTyp of string
+  | Struct of (typ * string) list
 
 let rec string_of_type t = 
   match t with
@@ -8,7 +15,6 @@ let rec string_of_type t =
   | Pointeur t -> "* "^(string_of_type t)
   | Undefined -> "Undefined"
   | NamedTyp n -> n
-
 
 let rec est_compatible t1 t2 =
   match t1, t2 with
