@@ -95,7 +95,7 @@ end
 module AstTds =
 struct
 
-  type affectable = Ident of Tds.info_ast | Deref of affectable
+  type affectable = Ident of Tds.info_ast | Deref of affectable | Acces of affectable * Tds.info_ast
 
   (* Expressions existantes dans notre langage *)
   (* ~ expression de l'AST syntaxique où les noms des identifiants ont été
@@ -111,6 +111,7 @@ struct
     | Adresse of Tds.info_ast
     | Null
     | New of typ
+    | StructExpr of expression list
 
   (* instructions existantes dans notre langage *)
   (* ~ instruction de l'AST syntaxique où les noms des identifiants ont été
@@ -126,7 +127,6 @@ struct
     | Retour of expression
     | Empty (* les nœuds ayant disparus: Const *)
     | AddAff of affectable * expression
-
 
   (* Structure des fonctions dans notre langage *)
   (* type de retour - informations associées à l'identificateur (dont son nom) - liste des paramètres (association type et information sur les paramètres) - corps de la fonction *)
@@ -181,7 +181,6 @@ type bloc = instruction list
   | TantQue of expression * bloc
   | Retour of expression
   | Empty (* les nœuds ayant disparus: Const *)
-
   | AddAffEntier of affectable * expression
   | AddAffRat of affectable * expression
 
