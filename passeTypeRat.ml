@@ -37,6 +37,23 @@ module PasseTypeRat :
     in
     (a, t)
 
+  let rec analyse_type_declaration t ia =
+    match info_ast_to_info ia with
+    | InfoVar _ -> modifier_type_info t ia
+    | InfoStruct (_, _, _, _, li) -> (
+        match t with
+        | Struct lc ->
+            let _ =
+              List.map
+                (fun ((t, _), i) ->
+                  let ia = info_to_info_ast i in
+                  analyse_type_declaration t ia)
+                (List.combine lc li)
+            in
+            ()
+        | _ -> ())
+    | _ -> failwith "hmm"
+
   (* AstTds.expression -> (AstType.Expression * typ) = <fun> *)
   (* Paramètre:
        - expr: AstTds.expression = l'expression dont on souhaite vérifier le typage
@@ -114,13 +131,11 @@ module PasseTypeRat :
   (* Erreur si mauvaise utilisation des identifiants *)
   let rec analyse_type_instruction tf i =
     match i with
-    | AstTds.Declaration (t, ia, e, attrs) ->
-        modifier_type_info t ia;
-        (* Si c'est une infostruct on type les champs *)
-        let _ = List.map (fun (t, ia) -> modifier_type_info t ia) attrs in
+    | AstTds.Declaration (t, ia, e) ->
+        analyse_type_declaration t ia;
         (* Crash si le type de l'expression n'est pas compatible avec celui déclaré *)
         let ne, te = analyse_type_expression e in
-        if est_compatible t te then Declaration (ia, ne, List.map snd attrs)
+        if est_compatible t te then Declaration (ia, ne)
         else raise (TypeInattendu (te, t))
     | AstTds.Affectation (aff, e) ->
         let ne, te = analyse_type_expression e in
@@ -189,20 +204,12 @@ module PasseTypeRat :
   (* Erreur si mauvais typage des identifiants *)
   let analyse_type_fonction (AstTds.Fonction (t, ia, lp, li)) =
     (* On enregistre le type attendu des paramètres *)
-    let _ =
-      List.map
-        (fun (t, ia, attrs) ->
-          modifier_type_info t ia;
-          let _ = List.map (fun (t, ia) -> modifier_type_info t ia) attrs in
-          ())
-        lp
-    in
+    let _ = List.map (fun (t, ia) -> analyse_type_declaration t ia) lp in
     (* type des paramètes *)
     (* info_ast des paramètres *)
     let ltp, liap =
       List.fold_right
-        (fun (t, ia, attrs) (ltp, liap) ->
-          (t :: ltp, (ia, List.map snd attrs) :: liap))
+        (fun (t, ia) (ltp, liap) -> (t :: ltp, ia :: liap))
         lp ([], [])
     in
     (* On enregistre le type de retour dans l'info de la fonction *)

@@ -161,11 +161,11 @@ module PasseTdsRat :
     | AstSyntax.StructExpr le ->
         StructExpr (List.map (analyse_tds_expression tds) le)
 
-  let rec create_info t n =
+  let rec creer_info t n =
     match t with
     | Struct lc ->
         InfoStruct
-          (n, Undefined, 0, "", List.map (fun (t, c) -> create_info t c) lc)
+          (n, Undefined, 0, "", List.map (fun (t, c) -> creer_info t c) lc)
     | _ -> InfoVar (n, Undefined, 0, "")
 
   (* analyse_tds_instruction : AstSyntax.instruction -> tds -> AstTds.instruction *)
@@ -187,25 +187,14 @@ module PasseTdsRat :
             (* et obtention de l'expression transformée *)
             let ne = analyse_tds_expression tds e in
             (* Création de l'information associée à l'identfiant *)
-            let info = create_info nt n in
+            let info = creer_info nt n in
             (* Création du pointeur sur l'information *)
             let ia = info_to_info_ast info in
             (* Ajout de l'information (pointeur) dans la tds *)
             ajouter tds n ia;
             (* Renvoie de la nouvelle déclaration où le nom a été remplacé par l'information
                et l'expression remplacée par l'expression issue de l'analyse *)
-            let attrs =
-              match nt with
-              | Struct lc ->
-                  List.map
-                    (fun (t, n) ->
-                      let i = InfoVar (n, Undefined, 0, "") in
-                      let ia = info_to_info_ast i in
-                      (t, ia))
-                    lc
-              | _ -> []
-            in
-            (Declaration (nt, ia, ne, attrs), nlstr)
+            (Declaration (nt, ia, ne), nlstr)
         | Some _ ->
             (* L'identifiant est trouvé dans la tds locale,
                il a donc déjà été déclaré dans le bloc courant *)
@@ -319,28 +308,17 @@ module PasseTdsRat :
               | Some _ -> raise (DoubleDeclaration n)
               | None -> ()
             in
-            let info = create_info nt n in
+            let info = creer_info nt n in
             let ia = info_to_info_ast info in
             ajouter tdsparam n ia;
-            let attrs =
-              match nt with
-              | Struct lc ->
-                  List.map
-                    (fun (t, n) ->
-                      let i = InfoVar (n, Undefined, 0, "") in
-                      let ia = info_to_info_ast i in
-                      (t, ia))
-                    lc
-              | _ -> []
-            in
-            ((nt, ia, attrs) :: lp, nlstr)
+            ((nt, ia) :: lp, nlstr)
           in
           List.fold_left nlp_inner_fun ([], lstr) lp
         in
         (* On remet la liste des params dans l'ordre *)
         let nlp = List.rev nlp in
         (* Création de l'information associée à l'identfiant *)
-        let info = InfoFun (n, Undefined, List.map (fun (t, _, _) -> t) nlp) in
+        let info = InfoFun (n, Undefined, List.map fst nlp) in
         (* Création du pointeur sur l'information *)
         let ia = info_to_info_ast info in
         (* Ajout du pointeur dans la TDS (pour la récursivité)*)

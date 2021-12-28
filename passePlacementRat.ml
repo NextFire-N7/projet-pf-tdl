@@ -11,30 +11,24 @@ module PassePlacementRat :
   type t1 = Ast.AstType.programme
   type t2 = Ast.AstPlacement.programme
 
-  let rec analyse_placement_attrs rev reg dep attrs =
-    let _ =
-      List.fold_left
-        (fun dep ia ->
-          let t = getTaille (get_type ia) in
-          if not rev then (
-            modifier_adresse_info dep reg ia;
-            (match info_ast_to_info ia with
-            | InfoStruct (_, _, _, _, attrs) ->
-                analyse_placement_attrs rev reg dep
-                  (List.map info_to_info_ast attrs)
-            | _ -> ());
-            dep + t)
-          else (
-            modifier_adresse_info (dep - t) reg ia;
-            (match info_ast_to_info ia with
-            | InfoStruct (_, _, _, _, attrs) ->
-                analyse_placement_attrs rev reg (dep - t)
-                  (List.map info_to_info_ast attrs)
-            | _ -> ());
-            dep - t))
-        dep attrs
+  let rec analyse_placement_struct rev reg dep ia =
+    let analyse_placement_champ dep i =
+      let ia = info_to_info_ast i in
+      let t = getTaille (get_type ia) in
+      if not rev then (
+        modifier_adresse_info dep reg ia;
+        analyse_placement_struct rev reg dep ia;
+        dep + t)
+      else (
+        modifier_adresse_info (dep - t) reg ia;
+        analyse_placement_struct rev reg (dep - t) ia;
+        dep - t)
     in
-    ()
+    match info_ast_to_info ia with
+    | InfoStruct (_, _, _, _, attrs) ->
+        let _ = List.fold_left analyse_placement_champ dep attrs in
+        ()
+    | _ -> ()
 
   (* analyse_placement_instruction : string -> int -> AstType.instruction -> int *)
   (* Paramètre reg: le registre mémoire *)
@@ -48,10 +42,10 @@ module PassePlacementRat :
     let inc =
       match i with
       (* Déclaration: il faut réserver la place de la nouvelle variable *)
-      | AstType.Declaration (ia, _, attrs) ->
+      | AstType.Declaration (ia, _) ->
           (* Place la variable à l'adresse dep du registre reg *)
           modifier_adresse_info dep reg ia;
-          analyse_placement_attrs false reg dep attrs;
+          analyse_placement_struct false reg dep ia;
           (* renvoie la taille du type déclaré *)
           getTaille (get_type ia)
       | AstType.Conditionnelle (_, bt, be) ->
@@ -93,14 +87,14 @@ module PassePlacementRat :
         - dep: int = le déplacement de base de notre paramètre
         - lp: info_ast list = la liste des paramètres à placer dans la mémoire
      Retour: unit *)
-  and analyse_placement_params dep lp =
-    let rec analyse_placement_param dep (ia, attrs) =
+  and analyse_placement_params dep liap =
+    let rec analyse_placement_param dep ia =
       let t = getTaille (get_type ia) in
       modifier_adresse_info (dep - t) "LB" ia;
-      analyse_placement_attrs true "LB" dep attrs;
+      analyse_placement_struct true "LB" dep ia;
       dep - t
     in
-    let _ = List.fold_left analyse_placement_param dep lp in
+    let _ = List.fold_left analyse_placement_param dep liap in
     ()
 
   (* analyser : AstType.Programme -> AstPlacement.Programme *)
