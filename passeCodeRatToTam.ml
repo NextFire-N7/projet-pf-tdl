@@ -26,7 +26,7 @@ struct
               if modif then failwith "on a foiré le typage"
               (* cste -> LOADL *)
               else ("LOADL " ^ string_of_int v, 0)
-          | InfoVar (_, t, _, _) ->
+          | InfoVar (_,t,_,_) | InfoStruct (_,t,_,_,_) ->
               (* on récupère des données sur la variable *)
               let str_taille, str_add, reg = get_var_data ia in
               (* Et on la charge sur la stack *)
@@ -37,6 +37,7 @@ struct
               in
               (code, getTaille t)
           | _ -> failwith "on a foiré le typage")
+      | AstTds.Acces (_, ia) -> generer_code_affectable_int modif (AstTds.Ident ia)
     in let code, _ = generer_code_affectable_int modif aff in
     code
 
@@ -58,9 +59,8 @@ struct
       "STOREI (" ^ string_of_int taille ^")" ^ "\n" ^
       (* Enfin, on supprime l'adresse du stack *)
       "POP (0) 1"
-
       (* Pout une simple variable, pas besoin  *)
-    | AstTds.Ident _ ->
+    | _ ->
       generer_code_affectable false aff ^ "\n" ^
       expr_add_code ^ "\n" ^
       generer_code_affectable true aff
@@ -113,6 +113,9 @@ struct
             | InfInt -> "SUBR ILss"
           in
           generer_code_expression e1 ^ generer_code_expression e2 ^ code_b
+      | AstType.StructExpr le ->
+          (* Pour les structures, on génère le code des expressions formant les membres *)
+          List.fold_left (fun c e -> c^generer_code_expression e) "" le
     in
     code ^ "\n"
 

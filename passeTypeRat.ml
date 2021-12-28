@@ -32,27 +32,22 @@ module PasseTypeRat :
           (* Si ce n'est pas un pointeur, on renvoir une erreur *)
           | _ -> raise (DereferenceNonPointeur taff))
       (* Si c'est un identifiant, on retourne le type de l'identifiant. *)
-      | AstTds.Ident ia -> get_type ia
-      | AstTds.Acces (_, ia) -> get_type ia
+      | AstTds.Ident ia | AstTds.Acces (_, ia) -> get_type ia
     in
     (a, t)
 
   let rec analyse_type_declaration t ia =
+    modifier_type_info t ia;
     match info_ast_to_info ia with
-    | InfoVar _ -> modifier_type_info t ia
     | InfoStruct (_, _, _, _, li) -> (
         match t with
         | Struct lc ->
             let _ =
-              List.map
-                (fun ((t, _), i) ->
-                  let ia = info_to_info_ast i in
-                  analyse_type_declaration t ia)
-                (List.combine lc li)
+              List.map2 (fun (t, _) ia -> analyse_type_declaration t ia) lc li
             in
             ()
         | _ -> ())
-    | _ -> failwith "hmm"
+    | _ -> ()
 
   (* AstTds.expression -> (AstType.Expression * typ) = <fun> *)
   (* Paramètre:
@@ -75,8 +70,8 @@ module PasseTypeRat :
         let nle = List.map fst nlet in
         let nlt = List.map snd nlet in
         (* Si les types sont conformes, on peut continuer et le type de l'expression est le type de retour de la fonction. *)
-        (* TODO: Utiliser est_compatible *)
-        if tpara = nlt then (AppelFonction (ia, nle), tr)
+        if List.for_all2 (fun t1 t2 -> est_compatible t1 t2) tpara nlt then
+          (AppelFonction (ia, nle), tr)
         else raise (TypesParametresInattendus (nlt, tpara))
     | AstTds.Affectable aff ->
         let naff, taff = analyse_type_affectable aff in
@@ -206,12 +201,9 @@ module PasseTypeRat :
     (* On enregistre le type attendu des paramètres *)
     let _ = List.map (fun (t, ia) -> analyse_type_declaration t ia) lp in
     (* type des paramètes *)
+    let ltp = List.map fst lp in
     (* info_ast des paramètres *)
-    let ltp, liap =
-      List.fold_right
-        (fun (t, ia) (ltp, liap) -> (t :: ltp, ia :: liap))
-        lp ([], [])
-    in
+    let liap = List.map snd lp in
     (* On enregistre le type de retour dans l'info de la fonction *)
     modifier_type_fonction_info t ltp ia;
     (* On analyse le bloc de la fonction en précisant le type de retour attendu *)

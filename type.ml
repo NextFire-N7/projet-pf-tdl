@@ -15,6 +15,7 @@ let rec string_of_type t =
   | Pointeur t -> "* "^(string_of_type t)
   | Undefined -> "Undefined"
   | NamedTyp n -> n
+  | Struct ts -> "Struct {"^(List.fold_left (fun q (t,n) -> string_of_type t ^" "^n^q) "" ts)^"}"
 
 let rec est_compatible t1 t2 =
   match t1, t2 with
@@ -26,6 +27,7 @@ let rec est_compatible t1 t2 =
     (* Pointeur null *)
     | _, Undefined -> true
     | _ -> false)
+  | Struct ts1, Struct ts2 -> (List.length ts1 = List.length ts2) && (List.for_all2 (fun (t1, _) (t2,_) -> est_compatible t1 t2) ts1 ts2)
   | _ -> false 
 
 let%test _ = est_compatible Bool Bool
@@ -64,13 +66,15 @@ let%test _ = not (est_compatible_list [Int] [Rat ; Int])
 let%test _ = not (est_compatible_list [Int ; Rat] [Rat ; Int])
 let%test _ = not (est_compatible_list [Bool ; Rat ; Bool] [Bool ; Rat ; Bool ; Int])
 
-let getTaille t =
+let rec getTaille t =
   match t with
   | Int -> 1
   | Bool -> 1
   | Rat -> 2
   | Undefined -> 0
   | Pointeur _ -> 1
+  | NamedTyp _ -> 0
+  | Struct ts -> List.fold_left (fun q (t,_) -> getTaille t + q) 0 ts
   
 let%test _ = getTaille Int = 1
 let%test _ = getTaille Bool = 1

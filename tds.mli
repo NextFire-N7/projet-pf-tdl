@@ -12,13 +12,13 @@ type info =
   (* types nommés *)
   | InfoTyp of string * typ
   (* Struct *)
-  | InfoStruct of string * typ * int * string * info list
+  | InfoStruct of string * typ * int * string * info_ast list
+  
+(* Données stockées dans la tds et dans les AST : pointeur sur une information *)
+and info_ast 
 
 (* Table des symboles *)
 type tds 
-
-(* Données stockées dans la tds et dans les AST : pointeur sur une information *)
-type info_ast 
 
 (* Création d'une table des symboles à la racine *)
 val creerTDSMere : unit -> tds 

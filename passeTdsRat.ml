@@ -13,6 +13,22 @@ module PasseTdsRat :
   type t2 = Ast.AstTds.programme
 
   let analyse_tds_affectable tds modif a =
+    let analyse_tds_affectable_acces (n, ia) c =
+      match info_ast_to_info ia with
+      | InfoStruct (_, _, _, _, lc) -> (
+          let iopt =
+            List.find_opt
+              (fun i ->
+                match info_ast_to_info i with
+                | InfoVar (n, _, _, _) | InfoStruct (n, _, _, _, _) -> n = c
+                | _ -> failwith "hmm")
+              lc
+          in
+          match iopt with
+          | Some iaa -> Acces (Ident ia, iaa)
+          | None -> raise (MauvaiseUtilisationIdentifiant n))
+      | _ -> raise (MauvaiseUtilisationIdentifiant n)
+    in
     let rec analyse_tds_affectable_int tds modif a c =
       match a with
       | AstSyntax.Deref a -> Deref (analyse_tds_affectable_int tds modif a c)
@@ -21,25 +37,10 @@ module PasseTdsRat :
           | None -> raise (IdentifiantNonDeclare n)
           | Some ia -> (
               match c with
-              | Some c -> (
-                  match info_ast_to_info ia with
-                  | InfoStruct (_, _, _, _, lc) -> (
-                      let iopt =
-                        List.find_opt
-                          (fun i ->
-                            match i with
-                            | InfoVar (n, _, _, _) -> n = c
-                            | InfoStruct (n, _, _, _, _) -> n = c
-                            | _ -> failwith "hmm")
-                          lc
-                      in
-                      match iopt with
-                      | Some i -> Acces (Ident ia, info_to_info_ast i)
-                      | None -> raise (MauvaiseUtilisationIdentifiant n))
-                  | _ -> raise (MauvaiseUtilisationIdentifiant n))
+              | Some c -> analyse_tds_affectable_acces (n, ia) c
               | None -> (
                   match info_ast_to_info ia with
-                  | InfoVar _ -> Ident ia
+                  | InfoVar _ | InfoStruct _ -> Ident ia
                   | InfoConst _ ->
                       if modif then raise (MauvaiseUtilisationIdentifiant n)
                       else Ident ia
@@ -154,19 +155,21 @@ module PasseTdsRat :
         | Some ia -> (
             (* Qqch porte bien ce nom, est-ce une fonction ? *)
             match info_ast_to_info ia with
-            | InfoVar _ -> Adresse ia
-            | InfoStruct _ -> Adresse ia
+            | InfoVar _ | InfoStruct _ -> Adresse ia
             | _ -> raise (MauvaiseUtilisationIdentifiant name)))
     | AstSyntax.New typ -> New typ
     | AstSyntax.StructExpr le ->
         StructExpr (List.map (analyse_tds_expression tds) le)
 
-  let rec creer_info t n =
-    match t with
-    | Struct lc ->
-        InfoStruct
-          (n, Undefined, 0, "", List.map (fun (t, c) -> creer_info t c) lc)
-    | _ -> InfoVar (n, Undefined, 0, "")
+  let rec creer_info_ast t n =
+    let info =
+      match t with
+      | Struct lc ->
+          InfoStruct
+            (n, Undefined, 0, "", List.map (fun (t, c) -> creer_info_ast t c) lc)
+      | _ -> InfoVar (n, Undefined, 0, "")
+    in
+    info_to_info_ast info
 
   (* analyse_tds_instruction : AstSyntax.instruction -> tds -> AstTds.instruction *)
   (* Paramètre tds : la table des symboles courante *)
@@ -177,28 +180,29 @@ module PasseTdsRat :
   let rec analyse_tds_instruction tds lstr i =
     match i with
     | AstSyntax.Declaration (t, n, e) -> (
-        match chercherLocalement tds n with
-        | None ->
-            (* L'identifiant n'est pas trouvé dans la tds locale,
-               il n'a donc pas été déclaré dans le bloc courant *)
-            (* Analyse du type *)
-            let nt, nlstr = analyse_tds_type tds lstr t in
-            (* Vérification de la bonne utilisation des identifiants dans l'expression *)
-            (* et obtention de l'expression transformée *)
-            let ne = analyse_tds_expression tds e in
-            (* Création de l'information associée à l'identfiant *)
-            let info = creer_info nt n in
-            (* Création du pointeur sur l'information *)
-            let ia = info_to_info_ast info in
-            (* Ajout de l'information (pointeur) dans la tds *)
-            ajouter tds n ia;
-            (* Renvoie de la nouvelle déclaration où le nom a été remplacé par l'information
-               et l'expression remplacée par l'expression issue de l'analyse *)
-            (Declaration (nt, ia, ne), nlstr)
-        | Some _ ->
-            (* L'identifiant est trouvé dans la tds locale,
-               il a donc déjà été déclaré dans le bloc courant *)
-            raise (DoubleDeclaration n))
+        if List.exists (List.mem n) lstr then raise (DoubleDeclaration n)
+        else
+          match chercherLocalement tds n with
+          | None ->
+              (* L'identifiant n'est pas trouvé dans la tds locale,
+                 il n'a donc pas été déclaré dans le bloc courant *)
+              (* Analyse du type *)
+              let nt, nlstr = analyse_tds_type tds lstr t in
+              (* Vérification de la bonne utilisation des identifiants dans l'expression *)
+              (* et obtention de l'expression transformée *)
+              let ne = analyse_tds_expression tds e in
+              (* Création de l'information associée à l'identfiant *)
+              (* Création du pointeur sur l'information *)
+              let ia = creer_info_ast nt n in
+              (* Ajout de l'information (pointeur) dans la tds *)
+              ajouter tds n ia;
+              (* Renvoie de la nouvelle déclaration où le nom a été remplacé par l'information
+                 et l'expression remplacée par l'expression issue de l'analyse *)
+              (Declaration (nt, ia, ne), nlstr)
+          | Some _ ->
+              (* L'identifiant est trouvé dans la tds locale,
+                 il a donc déjà été déclaré dans le bloc courant *)
+              raise (DoubleDeclaration n))
     | AstSyntax.Affectation (aff, e) ->
         let naff = analyse_tds_affectable tds true aff in
         let ne = analyse_tds_expression tds e in
@@ -308,8 +312,7 @@ module PasseTdsRat :
               | Some _ -> raise (DoubleDeclaration n)
               | None -> ()
             in
-            let info = creer_info nt n in
-            let ia = info_to_info_ast info in
+            let ia = creer_info_ast nt n in
             ajouter tdsparam n ia;
             ((nt, ia) :: lp, nlstr)
           in

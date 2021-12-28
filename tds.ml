@@ -7,10 +7,10 @@ type info =
   | InfoVar of string * typ * int * string
   | InfoFun of string * typ * typ list
   | InfoTyp of string * typ
-  | InfoStruct of string * typ * int * string * info list
+  | InfoStruct of string * typ * int * string * info_ast list
 
 (* Données stockées dans la tds  et dans les AST : pointeur sur une information *)
-type info_ast = info ref  
+and info_ast = info ref  
 
 (* Table des symboles hiérarchique *)
 (* Les tables locales sont codées à l'aide d'une hashtable *)
@@ -283,12 +283,16 @@ let%test _ =
 
 
 (* Convertie une info en une chaine de caractère - pour affichage *)
-let string_of_info info =
+let rec string_of_info info =
   match info with
   | InfoConst (n,value) -> "Constante "^n^" : "^(string_of_int value)
   | InfoVar (n,t,dep,base) -> "Variable "^n^" : "^(string_of_type t)^" "^(string_of_int dep)^"["^base^"]"
   | InfoFun (n,t,tp) -> "Fonction "^n^" : "^(List.fold_right (fun elt tq -> if tq = "" then (string_of_type elt) else (string_of_type elt)^" * "^tq) tp "" )^
                       " -> "^(string_of_type t)
+  | InfoTyp (n,t) -> "Type "^n^" : "^(string_of_type t)
+  | InfoStruct (n, t, dep, base, champs) -> 
+    "Structure "^n^" : "^(string_of_type t)^" "^(string_of_int dep)^"["^base^"]"^"\n"
+    ^(List.fold_left (fun q c -> string_of_info (info_ast_to_info c)^q) "" champs )
 
 (* Affiche la tds locale *)
 let afficher_locale tds =
@@ -310,6 +314,7 @@ let afficher_globale tds =
   let modifier_type_info t i =
     match !i with
     |InfoVar (n,_,dep,base) -> i:= InfoVar (n,t,dep,base)
+    |InfoStruct (n,_,dep,base,champs) -> i:= InfoStruct (n,t,dep,base,champs)
     | _ -> failwith "Appel modifier_type_info pas sur un InfoVar"
 
 let%test _ = 
@@ -338,7 +343,8 @@ let%test _ =
  let modifier_adresse_info d b i =
      match !i with
      |InfoVar (n,t,_,_) -> i:= InfoVar (n,t,d,b)
-     | _ -> failwith "Appel modifier_adresse_info pas sur un InfoVar"
+     |InfoStruct (n,t,_,_,c) -> i:= InfoStruct (n,t,d,b,c)
+     | _ -> failwith "Appel modifier_adresse_info pas sur un InfoVar/InfoStruct"
 
 let%test _ = 
   let info = InfoVar ("x", Rat, 4 , "SB") in
@@ -354,6 +360,8 @@ let%test _ =
     | InfoFun(n,_,_) -> n
     | InfoVar(n,_,_,_) -> n
     | InfoConst(n,_) -> n
+    | InfoTyp(n,_) -> n
+    | InfoStruct(n,_,_,_,_) -> n
 
 let %test _ = get_nom (ref (InfoConst ("const", 42))) = "const"
 let %test _ = get_nom (ref (InfoVar ("var", Rat, 0, ""))) = "var"
@@ -365,6 +373,8 @@ let %test _ = get_nom (ref (InfoFun ("fun", Pointeur Int, []))) = "fun"
     | InfoVar (_,t,_,_) -> t
     | InfoFun (_,t,_) -> t
     | InfoConst _ -> Int
+    | InfoTyp(_,t) -> t
+    | InfoStruct(_,t,_,_,_) -> t
     (* | _ -> failwith "Appel get_type pas sur un InfoVar ou InfoFun" *)
 
 let %test _ = get_type (ref (InfoConst ("const", 42))) = Int
@@ -387,8 +397,8 @@ let %test _ = get_taille (ref (InfoFun ("fun", Pointeur Int, []))) = getTaille (
   let get_adresse_var ia =
     let i = info_ast_to_info ia in
     match i with
-    | InfoVar(_,_,d,_) -> d
-    | _ -> failwith "Appel get_adresse_var pas sur un InfoVar"
+    | InfoVar(_,_,d,_) | InfoStruct(_,_,d,_,_) -> d
+    | _ -> failwith "Appel get_adresse_var pas sur un InfoVar/InfoStruct"
 
 let%test _ = try get_adresse_var (ref (InfoConst ("const", 42))) = 0 with Failure _ -> true
 let%test _ = get_adresse_var (ref (InfoVar ("var", Rat, 5, ""))) = 5
@@ -397,8 +407,8 @@ let%test _ = try get_adresse_var (ref (InfoFun ("fun", Pointeur Int, []))) = 0 w
   let get_registre_var ia =
     let i = info_ast_to_info ia in
     match i with
-    | InfoVar(_,_,_,r) -> r
-    | _ -> failwith "Appel get_registre_var pas sur un InfoVar"
+    | InfoVar(_,_,_,r) | InfoStruct(_,_,_,r,_) -> r
+    | _ -> failwith "Appel get_registre_var pas sur un InfoVar/InfoStruct"
 
 let%test _ = try get_registre_var (ref (InfoConst ("const", 42))) = "" with Failure _ -> true
 let%test _ = get_registre_var (ref (InfoVar ("var", Rat, 5, "DB"))) = "DB"

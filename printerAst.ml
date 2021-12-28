@@ -54,6 +54,7 @@ struct
     match aff with
     | Ident n -> n
     | Deref a -> "*"^(string_of_affectable a)
+    | Acces (a, c) -> (string_of_affectable a)^"."^c
   
 
   (* Conversion des expressions *)
@@ -73,6 +74,7 @@ struct
     | Null -> "null "
     | Adresse (n) -> "&"^n^" "
     | New (t) -> "new "^(string_of_type t)^" "
+    | StructExpr le -> "{"^((List.fold_right (fun i tq -> (string_of_expression i)^tq) le ""))^"} "
 
   (* Conversion des instructions *)
   let rec string_of_instruction i =
@@ -88,6 +90,7 @@ struct
                                   "FAIRE \n"^((List.fold_right (fun i tq -> (string_of_instruction i)^tq) b ""))^"\n"
     | Retour (e) -> "Retour  : RETURN "^(string_of_expression e)^"\n"
     | TypedefLocal (n,t) -> "TypedefLocal  : " ^ n ^ " = " ^ (string_of_type t) ^ "\n"
+    | AddAff (a, e) -> "AddAff  : " ^ (string_of_affectable a) ^ " += " ^ (string_of_expression e) ^ "\n"
 
   (* Conversion des fonctions *)
   let string_of_fonction (Fonction(t,n,lp,li)) = (string_of_type t)^" "^n^" ("^((List.fold_right (fun (t,n) tq -> (string_of_type t)^" "^n^" "^tq) lp ""))^") = \n"^
