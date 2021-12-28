@@ -148,6 +148,7 @@ module PasseTdsRat :
             (* Qqch porte bien ce nom, est-ce une fonction ? *)
             match info_ast_to_info ia with
             | InfoVar _ -> Adresse ia
+            | InfoStruct _ -> Adresse ia
             | _ -> raise (MauvaiseUtilisationIdentifiant name)))
     | AstSyntax.New typ -> New typ
     | AstSyntax.StructExpr le ->
@@ -299,10 +300,16 @@ module PasseTdsRat :
               | Some _ -> raise (DoubleDeclaration n)
               | None -> ()
             in
-            let infovar = InfoVar (n, Undefined, 0, "") in
-            let astvar = info_to_info_ast infovar in
-            ajouter tdsparam n astvar;
-            ((nt, astvar) :: lp, nlstr)
+            let info =
+              match nt with
+              | Struct lc ->
+                  let str, _ = analyse_tds_struct lstr lc in
+                  InfoStruct (n, Undefined, 0, "", str)
+              | _ -> InfoVar (n, Undefined, 0, "")
+            in
+            let ia = info_to_info_ast info in
+            ajouter tdsparam n ia;
+            ((nt, ia) :: lp, nlstr)
           in
           List.fold_left nlp_inner_fun ([], lstr) lp
         in

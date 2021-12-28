@@ -33,6 +33,7 @@ module PasseTypeRat :
           | _ -> raise (DereferenceNonPointeur taff))
       (* Si c'est un identifiant, on retourne le type de l'identifiant. *)
       | AstTds.Ident ia -> get_type ia
+      | AstTds.Acces (_, ia) -> get_type ia
     in
     (a, t)
 
@@ -100,6 +101,10 @@ module PasseTypeRat :
           | _ -> raise (TypeBinaireInattendu (f, te1, te2))
         in
         (Binaire (n_binaire, ne1, ne2), tr)
+    | AstTds.StructExpr le ->
+        let nlet = List.map analyse_type_expression le in
+        ( StructExpr (List.map fst nlet),
+          Struct (List.map (fun (_, t) -> (t, "")) nlet) )
 
   (* analyse_type_instruction : typ option -> AstTds.instruction -> AstType.instruction *)
   (* Paramètre tf : le type de retour de la fonction le cas échéant *)
@@ -111,6 +116,19 @@ module PasseTypeRat :
     match i with
     | AstTds.Declaration (t, ia, e) ->
         modifier_type_info t ia;
+        (* Si c'est une infostruct on type les champs *)
+        (match info_ast_to_info ia with
+        | InfoStruct (_, _, _, _, lc) -> (
+            match t with
+            | Struct lcs ->
+                let _ =
+                  List.map
+                    (fun ((t, _), (_, ia)) -> modifier_type_info t ia)
+                    (List.combine lcs lc)
+                in
+                ()
+            | _ -> failwith "on a foiré la passe tds")
+        | _ -> ());
         (* Crash si le type de l'expression n'est pas compatible avec celui déclaré *)
         let ne, te = analyse_type_expression e in
         if est_compatible t te then Declaration (ia, ne)
@@ -155,16 +173,16 @@ module PasseTypeRat :
             if est_compatible t te then Retour ne
             else raise (TypeInattendu (te, t)))
     | AstTds.Empty -> Empty
-
-    | AstTds.AddAff (aff, e) ->  let ne, te = analyse_type_expression e in
+    | AstTds.AddAff (aff, e) ->
+        let ne, te = analyse_type_expression e in
         let naff, taff = analyse_type_affectable aff in
         (* Crash si le type de l'expression n'est pas compatible avec celui déclaré *)
-        if (est_compatible taff te) then 
-        (* Seuls quelques types peuvent être additionnés *)
-        (match (est_compatible taff) with
-          | f when (f Int) -> AddAffEntier (naff, ne)
-          | f when (f Rat) -> AddAffRat    (naff, ne)
-          | _ -> raise (TypeInattendu (te, taff)))
+        if est_compatible taff te then
+          (* Seuls quelques types peuvent être additionnés *)
+          match est_compatible taff with
+          | f when f Int -> AddAffEntier (naff, ne)
+          | f when f Rat -> AddAffRat (naff, ne)
+          | _ -> raise (TypeInattendu (te, taff))
         else raise (TypeInattendu (te, taff))
 
   (* analyse_type_bloc : typ option -> AstTds.bloc -> AstType.bloc *)
@@ -182,7 +200,24 @@ module PasseTypeRat :
   (* Erreur si mauvais typage des identifiants *)
   let analyse_type_fonction (AstTds.Fonction (t, ia, lp, li)) =
     (* On enregistre le type attendu des paramètres *)
-    let _ = List.map (fun (t, ia) -> modifier_type_info t ia) lp in
+    let _ =
+      List.map
+        (fun (t, ia) ->
+          modifier_type_info t ia;
+          match info_ast_to_info ia with
+          | InfoStruct (_, _, _, _, lc) -> (
+              match t with
+              | Struct lcs ->
+                  let _ =
+                    List.map
+                      (fun ((t, _), (_, ia)) -> modifier_type_info t ia)
+                      (List.combine lcs lc)
+                  in
+                  ()
+              | _ -> failwith "on a foiré la passe tds")
+          | _ -> ())
+        lp
+    in
     (* type des paramètes *)
     let ltp = List.map fst lp in
     (* info_ast des paramètres *)
