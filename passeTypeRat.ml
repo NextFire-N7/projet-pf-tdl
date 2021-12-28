@@ -15,26 +15,31 @@ module PasseTypeRat :
   (* Paramètre:
          - a: AstTds.affectable = l'affectable
      Retour:
-         - AstType.affectable = le même affectable
          - typ = le type de l'affectable
      Raise:
          - DereferenceNonPointeur t = Si l'on tente de déréférencer un type t autre que Pointeur
   *)
   let rec analyse_type_affectable a =
-    let t =
-      match a with
-      | AstTds.Deref a -> (
-          (* On récupère le type réel de l'affectable déréférencé *)
-          let _, taff = analyse_type_affectable a in
-          match taff with
-          (* On déréférence le pointeur *)
-          | Pointeur t -> t
-          (* Si ce n'est pas un pointeur, on renvoir une erreur *)
-          | _ -> raise (DereferenceNonPointeur taff))
-      (* Si c'est un identifiant, on retourne le type de l'identifiant. *)
-      | AstTds.Ident ia | AstTds.Acces (_, ia) -> get_type ia
-    in
-    (a, t)
+    match a with
+    | AstTds.Deref a -> (
+        (* On récupère le type réel de l'affectable déréférencé *)
+        let taff = analyse_type_affectable a in
+        match taff with
+        (* On déréférence le pointeur *)
+        | Pointeur t -> t
+        (* Si ce n'est pas un pointeur, on renvoir une erreur *)
+        | _ -> raise (DereferenceNonPointeur taff))
+    (* Si c'est un identifiant, on retourne le type de l'identifiant. *)
+    | AstTds.Ident ia -> get_type ia
+    | AstTds.Acces (a, c) -> (
+        let taff = analyse_type_affectable a in
+        match taff with
+        | Struct lc -> (
+            let champ_opt = List.find_opt (fun (_, n) -> n = c) lc in
+            match champ_opt with
+            | None -> raise (TypeInattendu (taff, Struct []))
+            | Some (t, _) -> t)
+        | _ -> raise (TypeInattendu (taff, Struct [])))
 
   let rec analyse_type_declaration t ia =
     modifier_type_info t ia;
@@ -74,8 +79,8 @@ module PasseTypeRat :
           (AppelFonction (ia, nle), tr)
         else raise (TypesParametresInattendus (nlt, tpara))
     | AstTds.Affectable aff ->
-        let naff, taff = analyse_type_affectable aff in
-        (Affectable naff, taff)
+        let taff = analyse_type_affectable aff in
+        (Affectable aff, taff)
     | AstTds.Null -> (Null, Pointeur Undefined)
     | AstTds.New t -> (New t, Pointeur t)
     | AstTds.Adresse ia ->
@@ -134,9 +139,9 @@ module PasseTypeRat :
         else raise (TypeInattendu (te, t))
     | AstTds.Affectation (aff, e) ->
         let ne, te = analyse_type_expression e in
-        let naff, taff = analyse_type_affectable aff in
+        let taff = analyse_type_affectable aff in
         (* Crash si le type de l'expression n'est pas compatible avec celui déclaré *)
-        if est_compatible taff te then Affectation (naff, ne)
+        if est_compatible taff te then Affectation (aff, ne)
         else raise (TypeInattendu (te, taff))
     | AstTds.Affichage e -> (
         let ne, te = analyse_type_expression e in
@@ -174,13 +179,13 @@ module PasseTypeRat :
     | AstTds.Empty -> Empty
     | AstTds.AddAff (aff, e) ->
         let ne, te = analyse_type_expression e in
-        let naff, taff = analyse_type_affectable aff in
+        let taff = analyse_type_affectable aff in
         (* Crash si le type de l'expression n'est pas compatible avec celui déclaré *)
         if est_compatible taff te then
           (* Seuls quelques types peuvent être additionnés *)
           match est_compatible taff with
-          | f when f Int -> AddAffEntier (naff, ne)
-          | f when f Rat -> AddAffRat (naff, ne)
+          | f when f Int -> AddAffEntier (aff, ne)
+          | f when f Rat -> AddAffRat (aff, ne)
           | _ -> raise (TypeInattendu (te, taff))
         else raise (TypeInattendu (te, taff))
 

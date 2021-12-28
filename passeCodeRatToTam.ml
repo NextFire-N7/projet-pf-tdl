@@ -11,22 +11,22 @@ struct
   type t2 = string
 
   let generer_code_affectable modif aff =
-    let rec generer_code_affectable_int modif aff =
+    let rec generer_code_affectable_int modif aff champ =
       match aff with
       | AstTds.Deref a ->
           (* Si c'est une deref on va chercher à load (récursivement)
-          jusqu'à l'adresse du heap finale (modif=false) *)
-          let code, taille = generer_code_affectable_int false a in
+             jusqu'à l'adresse du heap finale (modif=false) *)
+          let code, taille = generer_code_affectable_int false a champ in
           (* Puis on load/store le contenu à cette adresse via LOADI/STOREI *)
-          if modif then (code ^ "\n" ^ "STOREI (" ^ string_of_int taille ^ ")", 0)
+          if modif then
+            (code ^ "\n" ^ "STOREI (" ^ string_of_int taille ^ ")", 0)
           else (code ^ "\n" ^ "LOADI (" ^ string_of_int taille ^ ")", 1)
       | AstTds.Ident ia -> (
           match info_ast_to_info ia with
           | InfoConst (_, v) ->
-              if modif then failwith "on a foiré le typage"
-              (* cste -> LOADL *)
+              if modif then failwith "internal error" (* cste -> LOADL *)
               else ("LOADL " ^ string_of_int v, 0)
-          | InfoVar (_,t,_,_) | InfoStruct (_,t,_,_,_) ->
+          | InfoVar (_, t, _, _) ->
               (* on récupère des données sur la variable *)
               let str_taille, str_add, reg = get_var_data ia in
               (* Et on la charge sur la stack *)
@@ -36,11 +36,27 @@ struct
                 else "LOAD (" ^ str_taille ^ ") " ^ str_add ^ "[" ^ reg ^ "]"
               in
               (code, getTaille t)
-          | _ -> failwith "on a foiré le typage")
-      | AstTds.Acces (_, ia) -> generer_code_affectable_int modif (AstTds.Ident ia)
-    in let code, _ = generer_code_affectable_int modif aff in
+          | InfoStruct (_, t, d, r, lc) ->
+              let str_taille, str_add, reg =
+                match champ with
+                | None -> get_var_data ia
+                | Some c ->
+                    let champ_ia = List.find (fun ia -> get_nom ia = c) lc in
+                    ( string_of_int (getTaille (get_type champ_ia)),
+                      string_of_int (d + get_adresse_var champ_ia),
+                      r )
+              in
+              let code =
+                if modif then
+                  "STORE (" ^ str_taille ^ ") " ^ str_add ^ "[" ^ reg ^ "]"
+                else "LOAD (" ^ str_taille ^ ") " ^ str_add ^ "[" ^ reg ^ "]"
+              in
+              (code, getTaille t)
+          | _ -> failwith "internal error")
+      | AstTds.Acces (a, c) -> generer_code_affectable_int modif a (Some c)
+    in
+    let code, _ = generer_code_affectable_int modif aff None in
     code
-
 
   let generer_code_addaff aff expr_add_code taille = 
     match aff with

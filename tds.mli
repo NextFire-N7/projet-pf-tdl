@@ -12,6 +12,7 @@ type info =
   (* types nommés *)
   | InfoTyp of string * typ
   (* Struct *)
+  | InfoAttr of string * typ * int
   | InfoStruct of string * typ * int * string * info_ast list
   
 (* Données stockées dans la tds et dans les AST : pointeur sur une information *)
