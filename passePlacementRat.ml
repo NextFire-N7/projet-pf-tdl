@@ -11,6 +11,31 @@ module PassePlacementRat :
   type t1 = Ast.AstType.programme
   type t2 = Ast.AstPlacement.programme
 
+  let rec analyse_placement_attrs rev reg dep attrs =
+    let _ =
+      List.fold_left
+        (fun dep ia ->
+          let t = getTaille (get_type ia) in
+          if not rev then (
+            modifier_adresse_info dep reg ia;
+            (match info_ast_to_info ia with
+            | InfoStruct (_, _, _, _, attrs) ->
+                analyse_placement_attrs rev reg dep
+                  (List.map info_to_info_ast attrs)
+            | _ -> ());
+            dep + t)
+          else (
+            modifier_adresse_info (dep - t) reg ia;
+            (match info_ast_to_info ia with
+            | InfoStruct (_, _, _, _, attrs) ->
+                analyse_placement_attrs rev reg (dep - t)
+                  (List.map info_to_info_ast attrs)
+            | _ -> ());
+            dep - t))
+        dep attrs
+    in
+    ()
+
   (* analyse_placement_instruction : string -> int -> AstType.instruction -> int *)
   (* Paramètre reg: le registre mémoire *)
   (* Paramètre dep: la profondeur actuelle dans le registre *)
@@ -23,9 +48,10 @@ module PassePlacementRat :
     let inc =
       match i with
       (* Déclaration: il faut réserver la place de la nouvelle variable *)
-      | AstType.Declaration (ia, _) ->
+      | AstType.Declaration (ia, _, attrs) ->
           (* Place la variable à l'adresse dep du registre reg *)
           modifier_adresse_info dep reg ia;
+          analyse_placement_attrs false reg dep attrs;
           (* renvoie la taille du type déclaré *)
           getTaille (get_type ia)
       | AstType.Conditionnelle (_, bt, be) ->
@@ -51,13 +77,8 @@ module PassePlacementRat :
        - li: instruction list = la liste des instructions dont on va gérer la placement mémoire
      Retour: unit *)
   and analyse_placement_bloc reg dep li =
-    match li with
-    | [] -> ()
-    | i :: q ->
-        (* On gère le placement mémoire de l'instruction et on récupère le nouveau déplacement *)
-        let ndep = analyse_placement_instruction reg dep i in
-        (* On analyse le reste du bloc avec ce nouveau déplacement *)
-        analyse_placement_bloc reg ndep q
+    let _ = List.fold_left (analyse_placement_instruction reg) dep li in
+    ()
 
   (* analyse_placement_fonction: AstType.Fonction -> AstPlacement.Fonction = <fun> *)
   (* Par effet de bord, gère le placement mémoire des paramètres et des variables du bloc de la fonction *)
@@ -73,12 +94,14 @@ module PassePlacementRat :
         - lp: info_ast list = la liste des paramètres à placer dans la mémoire
      Retour: unit *)
   and analyse_placement_params dep lp =
-    match lp with
-    | [] -> ()
-    | ia :: q ->
-        let t = getTaille (get_type ia) in
-        modifier_adresse_info (dep - t) "LB" ia;
-        analyse_placement_params (dep - t) q
+    let rec analyse_placement_param dep (ia, attrs) =
+      let t = getTaille (get_type ia) in
+      modifier_adresse_info (dep - t) "LB" ia;
+      analyse_placement_attrs true "LB" dep attrs;
+      dep - t
+    in
+    let _ = List.fold_left analyse_placement_param dep lp in
+    ()
 
   (* analyser : AstType.Programme -> AstPlacement.Programme *)
   (* Paramètre : le programme à analyser *)

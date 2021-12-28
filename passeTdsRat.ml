@@ -24,8 +24,18 @@ module PasseTdsRat :
               | Some c -> (
                   match info_ast_to_info ia with
                   | InfoStruct (_, _, _, _, lc) -> (
-                      try Acces (Ident ia, List.assoc c lc)
-                      with _ -> raise (MauvaiseUtilisationIdentifiant n))
+                      let iopt =
+                        List.find_opt
+                          (fun i ->
+                            match i with
+                            | InfoVar (n, _, _, _) -> n = c
+                            | InfoStruct (n, _, _, _, _) -> n = c
+                            | _ -> failwith "hmm")
+                          lc
+                      in
+                      match iopt with
+                      | Some i -> Acces (Ident ia, info_to_info_ast i)
+                      | None -> raise (MauvaiseUtilisationIdentifiant n))
                   | _ -> raise (MauvaiseUtilisationIdentifiant n))
               | None -> (
                   match info_ast_to_info ia with
@@ -63,7 +73,7 @@ module PasseTdsRat :
         (* On remet la struct dans le bon sens *)
         let nlc = List.rev nlc in
         (* Analyse de la structure *)
-        let _, nnlstr = analyse_tds_struct nlstr nlc in
+        let nnlstr = analyse_tds_struct nlstr nlc in
         (Struct nlc, nnlstr)
     | _ -> (t, lstr)
 
@@ -72,7 +82,7 @@ module PasseTdsRat :
        un champ en commun avec la nouvelle structure à analyser *)
     let matching =
       List.filter
-        (List.exists (fun (n, _) -> List.exists (fun (_, c) -> n = c) lc))
+        (List.exists (fun n -> List.exists (fun (_, c) -> n = c) lc))
         lstr
     in
     match matching with
@@ -83,17 +93,14 @@ module PasseTdsRat :
           List.fold_left
             (fun lc (_, c) ->
               (* vérif qu'il n'y a pas deux champs avec le même nom *)
-              if List.exists (fun (n, _) -> n = c) lc then
+              if List.exists (fun n -> n = c) lc then
                 raise (DoubleDeclaration c)
-              else
-                let infov = InfoVar (c, Undefined, 0, "") in
-                let ia = info_to_info_ast infov in
-                (c, ia) :: lc)
+              else c :: lc)
             [] lc
         in
         (* on remet la struct dans le bon sens *)
         let nstruct = List.rev nstruct in
-        (nstruct, nstruct :: lstr)
+        nstruct :: lstr
     (* Dans le cas contraire on regarde si la nouvelle structure est identique à l'une déjà déclarée *)
     | _ -> (
         (* On enlève celles qui ont un nombre de champs différent (donc forcément pas identiques) *)
@@ -101,14 +108,14 @@ module PasseTdsRat :
           List.filter (fun str -> List.length str = List.length lc) matching
         in
         (* et on essaie de trouver celle identique, ordre compris *)
-        try
-          let str =
-            List.find
-              (List.for_all2 (fun (_, c1) (c2, _) -> c1 = c2) lc)
-              meme_taille
-          in
-          (str, lstr)
-        with _ -> raise (DoubleDeclaration "todo"))
+        let struct_opt =
+          List.find_opt
+            (List.for_all2 (fun (_, c1) c2 -> c1 = c2) lc)
+            meme_taille
+        in
+        match struct_opt with
+        | Some _ -> lstr
+        | None -> raise (DoubleDeclaration "todo"))
 
   (* analyse_tds_expression : AstSyntax.expression -> AstTds.expression *)
   (* Paramètre tds : la table des symboles courante *)
@@ -154,6 +161,13 @@ module PasseTdsRat :
     | AstSyntax.StructExpr le ->
         StructExpr (List.map (analyse_tds_expression tds) le)
 
+  let rec create_info t n =
+    match t with
+    | Struct lc ->
+        InfoStruct
+          (n, Undefined, 0, "", List.map (fun (t, c) -> create_info t c) lc)
+    | _ -> InfoVar (n, Undefined, 0, "")
+
   (* analyse_tds_instruction : AstSyntax.instruction -> tds -> AstTds.instruction *)
   (* Paramètre tds : la table des symboles courante *)
   (* Paramètre i : l'instruction à analyser *)
@@ -173,20 +187,25 @@ module PasseTdsRat :
             (* et obtention de l'expression transformée *)
             let ne = analyse_tds_expression tds e in
             (* Création de l'information associée à l'identfiant *)
-            let info =
-              match nt with
-              | Struct lc ->
-                  let str, _ = analyse_tds_struct lstr lc in
-                  InfoStruct (n, Undefined, 0, "", str)
-              | _ -> InfoVar (n, Undefined, 0, "")
-            in
+            let info = create_info nt n in
             (* Création du pointeur sur l'information *)
             let ia = info_to_info_ast info in
             (* Ajout de l'information (pointeur) dans la tds *)
             ajouter tds n ia;
             (* Renvoie de la nouvelle déclaration où le nom a été remplacé par l'information
                et l'expression remplacée par l'expression issue de l'analyse *)
-            (Declaration (nt, ia, ne), nlstr)
+            let attrs =
+              match nt with
+              | Struct lc ->
+                  List.map
+                    (fun (t, n) ->
+                      let i = InfoVar (n, Undefined, 0, "") in
+                      let ia = info_to_info_ast i in
+                      (t, ia))
+                    lc
+              | _ -> []
+            in
+            (Declaration (nt, ia, ne, attrs), nlstr)
         | Some _ ->
             (* L'identifiant est trouvé dans la tds locale,
                il a donc déjà été déclaré dans le bloc courant *)
@@ -300,23 +319,28 @@ module PasseTdsRat :
               | Some _ -> raise (DoubleDeclaration n)
               | None -> ()
             in
-            let info =
-              match nt with
-              | Struct lc ->
-                  let str, _ = analyse_tds_struct lstr lc in
-                  InfoStruct (n, Undefined, 0, "", str)
-              | _ -> InfoVar (n, Undefined, 0, "")
-            in
+            let info = create_info nt n in
             let ia = info_to_info_ast info in
             ajouter tdsparam n ia;
-            ((nt, ia) :: lp, nlstr)
+            let attrs =
+              match nt with
+              | Struct lc ->
+                  List.map
+                    (fun (t, n) ->
+                      let i = InfoVar (n, Undefined, 0, "") in
+                      let ia = info_to_info_ast i in
+                      (t, ia))
+                    lc
+              | _ -> []
+            in
+            ((nt, ia, attrs) :: lp, nlstr)
           in
           List.fold_left nlp_inner_fun ([], lstr) lp
         in
         (* On remet la liste des params dans l'ordre *)
         let nlp = List.rev nlp in
         (* Création de l'information associée à l'identfiant *)
-        let info = InfoFun (n, Undefined, List.map fst nlp) in
+        let info = InfoFun (n, Undefined, List.map (fun (t, _, _) -> t) nlp) in
         (* Création du pointeur sur l'information *)
         let ia = info_to_info_ast info in
         (* Ajout du pointeur dans la TDS (pour la récursivité)*)

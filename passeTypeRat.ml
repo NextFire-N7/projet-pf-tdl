@@ -114,24 +114,13 @@ module PasseTypeRat :
   (* Erreur si mauvaise utilisation des identifiants *)
   let rec analyse_type_instruction tf i =
     match i with
-    | AstTds.Declaration (t, ia, e) ->
+    | AstTds.Declaration (t, ia, e, attrs) ->
         modifier_type_info t ia;
         (* Si c'est une infostruct on type les champs *)
-        (match info_ast_to_info ia with
-        | InfoStruct (_, _, _, _, lc) -> (
-            match t with
-            | Struct lcs ->
-                let _ =
-                  List.map
-                    (fun ((t, _), (_, ia)) -> modifier_type_info t ia)
-                    (List.combine lcs lc)
-                in
-                ()
-            | _ -> failwith "on a foiré la passe tds")
-        | _ -> ());
+        let _ = List.map (fun (t, ia) -> modifier_type_info t ia) attrs in
         (* Crash si le type de l'expression n'est pas compatible avec celui déclaré *)
         let ne, te = analyse_type_expression e in
-        if est_compatible t te then Declaration (ia, ne)
+        if est_compatible t te then Declaration (ia, ne, List.map snd attrs)
         else raise (TypeInattendu (te, t))
     | AstTds.Affectation (aff, e) ->
         let ne, te = analyse_type_expression e in
@@ -202,26 +191,20 @@ module PasseTypeRat :
     (* On enregistre le type attendu des paramètres *)
     let _ =
       List.map
-        (fun (t, ia) ->
+        (fun (t, ia, attrs) ->
           modifier_type_info t ia;
-          match info_ast_to_info ia with
-          | InfoStruct (_, _, _, _, lc) -> (
-              match t with
-              | Struct lcs ->
-                  let _ =
-                    List.map
-                      (fun ((t, _), (_, ia)) -> modifier_type_info t ia)
-                      (List.combine lcs lc)
-                  in
-                  ()
-              | _ -> failwith "on a foiré la passe tds")
-          | _ -> ())
+          let _ = List.map (fun (t, ia) -> modifier_type_info t ia) attrs in
+          ())
         lp
     in
     (* type des paramètes *)
-    let ltp = List.map fst lp in
     (* info_ast des paramètres *)
-    let liap = List.map snd lp in
+    let ltp, liap =
+      List.fold_right
+        (fun (t, ia, attrs) (ltp, liap) ->
+          (t :: ltp, (ia, List.map snd attrs) :: liap))
+        lp ([], [])
+    in
     (* On enregistre le type de retour dans l'info de la fonction *)
     modifier_type_fonction_info t ltp ia;
     (* On analyse le bloc de la fonction en précisant le type de retour attendu *)
