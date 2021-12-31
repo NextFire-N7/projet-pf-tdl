@@ -12,20 +12,40 @@ module PasseTdsRat :
   type t1 = Ast.AstSyntax.programme
   type t2 = Ast.AstTds.programme
 
-  let rec analyse_tds_affectable tds modif a =
-    match a with
-    | AstSyntax.Deref a -> Deref (analyse_tds_affectable tds modif a)
-    | AstSyntax.Ident n -> (
-        match chercherGlobalement tds n with
-        | None -> raise (IdentifiantNonDeclare n)
-        | Some ia -> (
-            match info_ast_to_info ia with
-            | InfoVar _ | InfoStruct _ -> Ident ia
-            | InfoConst _ ->
-                if modif then raise (MauvaiseUtilisationIdentifiant n)
-                else Ident ia
-            | _ -> raise (MauvaiseUtilisationIdentifiant n)))
-    | AstSyntax.Acces (a, c) -> Acces (analyse_tds_affectable tds modif a, c)
+  let analyse_tds_affectable tds modif a =
+    let rec analyse_acces na c =
+      match na with
+      | Deref nna -> analyse_acces nna c
+      | Ident ia -> (
+          match info_ast_to_info ia with
+          | InfoStruct (_, _, _, _, lc) -> (
+              let nia_opt = List.find_opt (fun iac -> c = get_nom iac) lc in
+              match nia_opt with
+              | Some nia -> nia
+              | None -> raise (MauvaiseUtilisationIdentifiant c))
+          | _ -> raise (MauvaiseUtilisationIdentifiant c))
+      | Acces (_, ia) -> analyse_acces (Ident ia) c
+    in
+    let rec analyse_tds_affectable_int tds modif a c =
+      let na =
+        match a with
+        | AstSyntax.Deref a -> Deref (analyse_tds_affectable_int tds modif a c)
+        | AstSyntax.Ident n -> (
+            match chercherGlobalement tds n with
+            | None -> raise (IdentifiantNonDeclare n)
+            | Some ia -> (
+                match info_ast_to_info ia with
+                | InfoVar _ | InfoStruct _ -> Ident ia
+                | InfoConst _ ->
+                    if modif then raise (MauvaiseUtilisationIdentifiant n)
+                    else Ident ia
+                | _ -> raise (MauvaiseUtilisationIdentifiant n)))
+        | AstSyntax.Acces (a, c) ->
+            analyse_tds_affectable_int tds modif a (Some c)
+      in
+      match c with Some n -> Acces (na, analyse_acces na n) | None -> na
+    in
+    analyse_tds_affectable_int tds modif a None
 
   let rec analyse_tds_type tds t =
     match t with

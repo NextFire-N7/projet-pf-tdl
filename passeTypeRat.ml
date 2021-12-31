@@ -31,15 +31,7 @@ module PasseTypeRat :
         | _ -> raise (DereferenceNonPointeur taff))
     (* Si c'est un identifiant, on retourne le type de l'identifiant. *)
     | AstTds.Ident ia -> get_type ia
-    | AstTds.Acces (a, c) -> (
-        let taff = analyse_type_affectable a in
-        match taff with
-        | Struct lc -> (
-            let champ_opt = List.find_opt (fun (_, n) -> n = c) lc in
-            match champ_opt with
-            | None -> raise (TypeInattendu (taff, Struct []))
-            | Some (t, _) -> t)
-        | _ -> raise (TypeInattendu (taff, Struct [])))
+    | AstTds.Acces (_, ia) -> get_type ia
 
   let rec analyse_type_declaration t ia =
     modifier_type_info t ia;

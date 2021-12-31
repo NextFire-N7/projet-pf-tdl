@@ -95,7 +95,7 @@ end
 module AstTds =
 struct
 
-  type affectable = Ident of Tds.info_ast | Deref of affectable | Acces of affectable * string
+  type affectable = Ident of Tds.info_ast | Deref of affectable | Acces of affectable * Tds.info_ast
 
   (* Expressions existantes dans notre langage *)
   (* ~ expression de l'AST syntaxique où les noms des identifiants ont été
