@@ -12,24 +12,42 @@ module PasseTdsRat :
   type t1 = Ast.AstSyntax.programme
   type t2 = Ast.AstTds.programme
 
+  (* analyse_tds_affectable : tds -> bool -> AstSyntax.affectable -> affectable *)
+  (* Param tds : tds courante *)
+  (* Param modif : true si on a l'intention "d'écrire" sur la variable, false sinon *)
+  (* Param a : affectable à analyser *)
+  (* Analyse la bonne utilisation de l'affectable *)
   let analyse_tds_affectable tds modif a =
+    (* Vérifie en cas d'accès d'un champs que l'attribut
+       est bien présent sur la variable parente *)
     let rec analyse_acces na c =
       match na with
+      (* Pointeur -> on check la variable pointée *)
       | Deref nna -> analyse_acces nna c
+      (* Variable "classique" *)
       | Ident ia -> (
           match info_ast_to_info ia with
+          (* C'est bien une struct, on check les champs *)
           | InfoStruct (_, _, _, _, lc) -> (
+              (* On cherche un champ qui porte le même nom *)
               let nia_opt = List.find_opt (fun iac -> c = get_nom iac) lc in
               match nia_opt with
+              (* On en a trouvé un, on renvoie ce champ *)
               | Some nia -> nia
+              (* Sinon c'est pas bon *)
               | None -> raise (MauvaiseUtilisationIdentifiant c))
           | _ -> raise (MauvaiseUtilisationIdentifiant c))
+      (* Accès d'un accès ? On fait comme si c'était un accès sur une variable classique *)
       | Acces (_, ia) -> analyse_acces (Ident ia) c
     in
+    (* fonction récursive auxiliaire *)
     let rec analyse_tds_affectable_int tds modif a c =
+      (* On analyse l'affectable *)
       let na =
         match a with
+        (* Déref : on récurse *)
         | AstSyntax.Deref a -> Deref (analyse_tds_affectable_int tds modif a c)
+        (* Identifiant *)
         | AstSyntax.Ident n -> (
             match chercherGlobalement tds n with
             | None -> raise (IdentifiantNonDeclare n)
@@ -40,16 +58,26 @@ module PasseTdsRat :
                     if modif then raise (MauvaiseUtilisationIdentifiant n)
                     else Ident ia
                 | _ -> raise (MauvaiseUtilisationIdentifiant n)))
+        (* Si c'est un accès, on réanalyse la variable parente en prévenant
+           que l'on souhaite accèder à un champ c de cette dernière *)
         | AstSyntax.Acces (a, c) ->
             analyse_tds_affectable_int tds modif a (Some c)
       in
+      (* Si on cherchait à accéder un champ de celui ci, on vérifie le bon fondement de l'accès *)
       match c with Some n -> Acces (na, analyse_acces na n) | None -> na
     in
     analyse_tds_affectable_int tds modif a None
 
+  (* analyse_tds_type : tds -> typ -> typ *)
+  (* Param tds : la tds courante *)
+  (* Param t : le type à analyser *)
+  (* "Met à plat" les types en résolvant les types nommés vers les types primitifs du langage *)
+  (* Erreur si un type nommé n'est pas déclaré *)
   let rec analyse_tds_type tds t =
     match t with
+    (* Pointeur -> on renvoie un pointeur du type primitif *)
     | Pointeur t -> Pointeur (analyse_tds_type tds t)
+    (* Type nommé -> on cherche récursivement le type primitif *)
     | NamedTyp n -> (
         match chercherGlobalement tds n with
         | None -> raise (TypeNonDeclare n)
@@ -57,14 +85,22 @@ module PasseTdsRat :
             match info_ast_to_info ia with
             | InfoTyp (_, t) -> analyse_tds_type tds t
             | _ -> raise (MauvaiseUtilisationIdentifiant n)))
+    (* Structure -> on analyse les types des champs et
+       vérifie que la struct n'est pas l'objet d'une double déclaration *)
     | Struct lc ->
         (* Analyse des types des champs de la structure *)
         let nlc = List.map (fun (t, c) -> (analyse_tds_type tds t, c)) lc in
         (* Analyse de la structure en elle même *)
         analyse_tds_struct tds nlc;
         Struct nlc
+    (* Type primitif -> on le renvoie simplement *)
     | _ -> t
 
+  (* analyse_tds_struct : tds -> (typ * string) list -> unit *)
+  (* Param tds : la tds courante *)
+  (* Param lc : la liste des champs de la structure *)
+  (* Analyse récursivement les champs de la structure et vérifie que
+     la structure n'est pas l'objet d'une double déclaration *)
   and analyse_tds_struct tds lc =
     (* On commence par vérifier que les attributs sont soit TOUS présents, soit TOUS absents de la tds *)
     (* Tout en les ajoutant à la tds *)
@@ -138,12 +174,19 @@ module PasseTdsRat :
     | AstSyntax.StructExpr le ->
         StructExpr (List.map (analyse_tds_expression tds) le)
 
+  (* creer_info_ast : typ -> string -> info_ast *)
+  (* Param t : type de la variable *)
+  (* Param n : nom de la variable *)
+  (* Crée récursivement l'InfoVar ou l'InfoStruct avec ses champs dans le cas échéant
+     et renvoie une info_ast associée *)
   let rec creer_info_ast t n =
     let info =
       match t with
+      (* C'est une struct: on renvoie une infostruct avec ses champs *)
       | Struct lc ->
           InfoStruct
             (n, Undefined, 0, "", List.map (fun (t, c) -> creer_info_ast t c) lc)
+      (* sinon une simple infovar *)
       | _ -> InfoVar (n, Undefined, 0, "")
     in
     info_to_info_ast info

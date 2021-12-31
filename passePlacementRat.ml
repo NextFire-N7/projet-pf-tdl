@@ -11,6 +11,10 @@ module PassePlacementRat :
   type t1 = Ast.AstType.programme
   type t2 = Ast.AstPlacement.programme
 
+  (* analyse_placement_struct : string -> info_ast -> unit *)
+  (* Param reg : registre de la variable *)
+  (* Param ia : info_ast à modifier *)
+  (* Check si c'est une structure et place ses attributs *relativement* à celle-ci *)
   let rec analyse_placement_struct reg ia =
     let analyse_placement_champ dep ia =
       let t = getTaille (get_type ia) in

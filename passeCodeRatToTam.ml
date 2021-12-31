@@ -28,10 +28,12 @@ struct
               else ("LOADL " ^ string_of_int v, 0)
           | InfoVar (_, t, a, reg) | InfoStruct (_, t, a, reg, _) ->
               (* on récupère des données sur la variable *)
+              (* taille = taille de la variable ou de l'attribut final si accès *)
               let str_taille =
                 string_of_int
                   (match size with Some s -> s | None -> getTaille t)
               in
+              (* déplacement = position de la variable + offset si accès attributs *)
               let str_add = string_of_int (a + offset) in
               (* Et on la charge sur la stack *)
               let code =
@@ -43,8 +45,15 @@ struct
           | _ -> failwith "internal error")
       | AstTds.Acces (a, ia) -> (
           match info_ast_to_info ia with
-          | InfoVar (_, t, o, _) | InfoStruct (_, t, o, _, _) ->
-              generer_code_affectable_int modif a o (Some (getTaille t))
+          (* Un attribut est forcément une infovar ou infostruct *)
+          | InfoVar (_, t, no, _) | InfoStruct (_, t, no, _, _) ->
+              (* La taille est celle de l'attribut final *)
+              let nsize = match size with
+              (* size est encore à None: ia est l'attribut final *)
+              | None -> Some (getTaille t)
+              | Some _ -> size
+              (* On incrémente l'offset *)
+              in generer_code_affectable_int modif a (offset + no) nsize
           | _ -> failwith "internal error")
     in
     let code, _ = generer_code_affectable_int modif aff 0 None in

@@ -31,11 +31,17 @@ module PasseTypeRat :
         | _ -> raise (DereferenceNonPointeur taff))
     (* Si c'est un identifiant, on retourne le type de l'identifiant. *)
     | AstTds.Ident ia -> get_type ia
+    (* Si c'est un accès on renvoie le type de l'attribut *)
     | AstTds.Acces (_, ia) -> get_type ia
 
+  (* analyse_type_declaration : typ -> info_ast -> unit *)
+  (* Param t : type déclaré *)
+  (* ia : info_ast que l'on doit typer *)
   let rec analyse_type_declaration t ia =
+    (* On enregistre le type dans l'info_ast *)
     modifier_type_info t ia;
     match info_ast_to_info ia with
+    (* Si c'est une structure on type aussi les info_ast des attributs *)
     | InfoStruct (_, _, _, _, li) -> (
         match t with
         | Struct lc ->
