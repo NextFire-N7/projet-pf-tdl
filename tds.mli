@@ -84,6 +84,3 @@ val get_adresse_var: info_ast -> int
 
 (* Retourne le registre dans lequel est stocké la variable *)
 val get_registre_var: info_ast -> string
-
-(* Retourne toutes les infos concernant une variable (sa taille de type (en string), son déplacement (en string) et son registre) *)
-val get_var_data: info_ast -> string * string * string

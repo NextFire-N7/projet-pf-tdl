@@ -29,10 +29,8 @@ struct
           | InfoVar (_, t, a, reg) | InfoStruct (_, t, a, reg, _) ->
               (* on récupère des données sur la variable *)
               (* taille = taille de la variable ou de l'attribut final si accès *)
-              let str_taille =
-                string_of_int
-                  (match size with Some s -> s | None -> getTaille t)
-              in
+              let taille = (match size with Some s -> s | None -> getTaille t) in
+              let str_taille = string_of_int taille in
               (* déplacement = position de la variable + offset si accès attributs *)
               let str_add = string_of_int (a + offset) in
               (* Et on la charge sur la stack *)
@@ -41,7 +39,7 @@ struct
                   "STORE (" ^ str_taille ^ ") " ^ str_add ^ "[" ^ reg ^ "]"
                 else "LOAD (" ^ str_taille ^ ") " ^ str_add ^ "[" ^ reg ^ "]"
               in
-              (code, getTaille t)
+              (code, taille)
           | _ -> failwith "internal error")
       | AstTds.Acces (a, ia) -> (
           match info_ast_to_info ia with
@@ -101,7 +99,8 @@ struct
           "LOADL " ^ string_of_int (getTaille t) ^ "\n" ^
           "SUBR MAlloc"
       | AstType.Adresse ia ->
-          let _, str_add, reg = get_var_data ia in
+          let str_add = string_of_int (get_adresse_var ia) in
+          let reg = get_registre_var ia in
           "LOADA " ^  str_add ^ "[" ^ reg ^ "]"
       (* En fonction du résultat du booleén, on charge 1 ou 0 sur la stack *)
       | AstType.Booleen b -> if b then "LOADL 1" else "LOADL 0"
@@ -146,15 +145,16 @@ struct
     let code, taille =
       match i with
       | AstType.Declaration (ia, e) ->
-          let taille_int = get_taille ia in
-          (* get_var_data renvoie la taille, l'adresse et le registre de la variable sous forme de strings *)
-          let taille, addr, reg = get_var_data ia in
+          let taille = get_taille ia in
+          let taille_str = string_of_int (taille) in
+          let addr = string_of_int (get_adresse_var ia) in
+          let reg = get_registre_var ia in
           (* Réservation dans le stack *)
-          "PUSH " ^ taille ^ "\n" ^
+          "PUSH " ^ taille_str ^ "\n" ^
           (* code de l'expr *)
           generer_code_expression e ^
           (* Store du résultat de l'expression dans l'espace alloué précédement *)
-          "STORE (" ^ taille ^ ") " ^ addr ^ "[" ^ reg ^ "]", taille_int
+          "STORE (" ^ taille_str ^ ") " ^ addr ^ "[" ^ reg ^ "]", taille
       | AstType.Affectation (aff, e) ->
           (* code de l'expr *)
           generer_code_expression e ^
