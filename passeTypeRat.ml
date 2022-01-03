@@ -80,7 +80,7 @@ module PasseTypeRat :
         let taff = analyse_type_affectable aff in
         (Affectable aff, taff)
     | AstTds.Null -> (Null, Pointeur Undefined)
-    | AstTds.New t -> (New t, t)
+    | AstTds.New t -> (New t, Pointeur t)
     | AstTds.Adresse ia ->
         let t = get_type ia in
         (Adresse ia, Pointeur t)

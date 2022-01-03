@@ -72,3 +72,7 @@ let%expect_test "test-param-fonction" =
 let%expect_test "test-new" =
   runtam "../../fichiersRat/test-pointeurs/test-new.rat";
   [%expect{| 7 |}]
+
+let%expect_test "exemple" =
+  runtam "../../fichiersRat/test-pointeurs/exemple.rat";
+  [%expect{| 3 |}]
