@@ -1,0 +1,12 @@
+main{
+    typedef Int = int;
+typedef PtInt = Int*;
+typedef PtIntbis = PtInt;
+    typedef PtPtInt = PtIntbis*;
+    PtPtInt a = (new int**);
+    PtInt b = (new Int*);
+    (*b) = 4;
+    a = &b;
+    int** c = a;
+    print (*(*c));
+}

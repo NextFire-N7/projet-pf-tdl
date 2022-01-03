@@ -22,11 +22,8 @@ let rec est_compatible t1 t2 =
   | Bool, Bool -> true
   | Int, Int -> true
   | Rat, Rat -> true 
-  | Pointeur a, Pointeur b -> (est_compatible a b) ||
-    (match a,b with
-    (* Pointeur null *)
-    | _, Undefined -> true
-    | _ -> false)
+  | Pointeur Undefined, Pointeur _ | Pointeur _, Pointeur Undefined -> true
+  | Pointeur a, Pointeur b -> est_compatible a b
   | Struct ts1, Struct ts2 -> (List.length ts1 = List.length ts2) && (List.for_all2 (fun (t1, _) (t2,_) -> est_compatible t1 t2) ts1 ts2)
   | _ -> false 
 

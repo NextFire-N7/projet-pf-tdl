@@ -30,3 +30,11 @@ let%expect_test "exemple1" =
 let%expect_test "exemple2" =
   runtam "../../fichiersRat/test-typedef/exemple2.rat";
   [%expect{| 7 |}]
+
+let%expect_test "chaine" =
+  runtam "../../fichiersRat/test-typedef/chaine.rat";
+  [%expect{| 7 |}]
+
+let%expect_test "pointeurs" =
+  runtam "../../fichiersRat/test-typedef/pointeurs.rat";
+  [%expect{| 4 |}]

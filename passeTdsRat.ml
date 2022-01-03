@@ -170,7 +170,7 @@ module PasseTdsRat :
             match info_ast_to_info ia with
             | InfoVar _ | InfoStruct _ -> Adresse ia
             | _ -> raise (MauvaiseUtilisationIdentifiant name)))
-    | AstSyntax.New typ -> New typ
+    | AstSyntax.New typ -> New (analyse_tds_type tds typ)
     | AstSyntax.StructExpr le ->
         StructExpr (List.map (analyse_tds_expression tds) le)
 

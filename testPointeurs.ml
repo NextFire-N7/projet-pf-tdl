@@ -68,3 +68,7 @@ let%expect_test "test-acces-dynamique" =
 let%expect_test "test-param-fonction" =
   runtam "../../fichiersRat/test-pointeurs/test-param-fonction.rat";
   [%expect{| true10 |}]
+
+let%expect_test "test-new" =
+  runtam "../../fichiersRat/test-pointeurs/test-new.rat";
+  [%expect{| 7 |}]

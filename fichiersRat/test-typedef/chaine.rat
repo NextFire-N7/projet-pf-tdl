@@ -1,0 +1,15 @@
+typedef Int2 = int;
+typedef Int3 = Int2;
+typedef Int4 = Int3;
+
+Int4 plus (int a Int3 b){
+    return (a+b);
+}
+
+main{
+    Int2 a = 3;
+    typedef Int5 = Int3;
+    int b = 4;
+    Int5 y = call plus (a b);
+    print y;
+}
