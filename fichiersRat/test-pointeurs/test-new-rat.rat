@@ -1,0 +1,27 @@
+main{
+    int foo = 42;
+
+    rat* a = (new rat);
+
+    rat** b = (new rat*);
+    (*b) = (new rat);
+
+    rat*** c = (new rat**);
+    (*c) = (new rat*);
+    (*(*c)) = (new rat);
+
+    rat**** d = (new rat***);
+    (*d) = (new rat**);
+    (*(*d)) = (new rat*);
+    (*(*(*d))) = (new rat);
+
+    (*a) = [1/2];
+    (*b) = a;
+    (*c) = &a;
+    (*(*(*(*d)))) = (*a);
+
+    print (*a);
+    print (*(*b));
+    print (*(*(*c)));
+    print (*(*(*(*d))));
+}

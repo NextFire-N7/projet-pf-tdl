@@ -11,25 +11,32 @@ struct
   type t2 = string
 
   let generer_code_affectable modif aff =
-    let rec generer_code_affectable_int modif aff offset size =
+    let rec generer_code_affectable_int modif aff offset ftyp =
       match aff with
       | AstTds.Deref a ->
           (* Si c'est une deref on va chercher à load (récursivement)
              jusqu'à l'adresse du heap finale (modif=false) *)
-          let code, taille = generer_code_affectable_int false a offset size in
+          let code, t = generer_code_affectable_int false a offset ftyp in
           (* Puis on load/store le contenu à cette adresse via LOADI/STOREI *)
+          let innert = 
+            match t with
+            | Pointeur innert -> innert
+            | _ -> failwith "internal error"
+          in
+          let taille = getTaille innert in
           if modif then
-            (code ^ "\n" ^ "STOREI (" ^ string_of_int taille ^ ")", 0)
-          else (code ^ "\n" ^ "LOADI (" ^ string_of_int taille ^ ")", 1)
+            (code ^ "\n" ^ "STOREI (" ^ string_of_int taille ^ ")", innert)
+          else (code ^ "\n" ^ "LOADI (" ^ string_of_int taille ^ ")", innert)
       | AstTds.Ident ia -> (
           match info_ast_to_info ia with
           | InfoConst (_, v) ->
               if modif then failwith "internal error" (* cste -> LOADL *)
-              else ("LOADL " ^ string_of_int v, 0)
+              else ("LOADL " ^ string_of_int v, Int)
           | InfoVar (_, t, a, reg) | InfoStruct (_, t, a, reg, _) ->
               (* on récupère des données sur la variable *)
               (* taille = taille de la variable ou de l'attribut final si accès *)
-              let taille = (match size with Some s -> s | None -> getTaille t) in
+              let rtyp = (match ftyp with Some ft -> ft | None -> t) in
+              let taille = getTaille rtyp in
               let str_taille = string_of_int taille in
               (* déplacement = position de la variable + offset si accès attributs *)
               let str_add = string_of_int (a + offset) in
@@ -39,19 +46,19 @@ struct
                   "STORE (" ^ str_taille ^ ") " ^ str_add ^ "[" ^ reg ^ "]"
                 else "LOAD (" ^ str_taille ^ ") " ^ str_add ^ "[" ^ reg ^ "]"
               in
-              (code, taille)
+              (code, rtyp)
           | _ -> failwith "internal error")
       | AstTds.Acces (a, ia) -> (
           match info_ast_to_info ia with
           (* Un attribut est forcément une infovar ou infostruct *)
           | InfoVar (_, t, no, _) | InfoStruct (_, t, no, _, _) ->
               (* La taille est celle de l'attribut final *)
-              let nsize = match size with
+              let nftyp = match ftyp with
               (* size est encore à None: ia est l'attribut final *)
-              | None -> Some (getTaille t)
-              | Some _ -> size
+              | None -> Some t
+              | Some _ -> ftyp
               (* On incrémente l'offset *)
-              in generer_code_affectable_int modif a (offset + no) nsize
+              in generer_code_affectable_int modif a (offset + no) nftyp
           | _ -> failwith "internal error")
     in
     let code, _ = generer_code_affectable_int modif aff 0 None in
@@ -212,7 +219,6 @@ struct
           (* puis retour *)
           "RETURN (" ^ string_of_int taille_retour ^ ") " ^ string_of_int taille_params, 0
       | AstType.Empty -> "", 0
-
       | AstType.AddAffEntier (aff, exp) -> generer_code_addaff aff ((generer_code_expression exp) ^ "SUBR IAdd") 1 , 0
       | AstType.AddAffRat (aff, exp) -> generer_code_addaff aff ((generer_code_expression exp) ^ "CALL (LB) RAdd") 2 , 0
     in

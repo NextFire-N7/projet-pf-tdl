@@ -1,0 +1,20 @@
+main{
+    int foo = 42;
+
+    int* a = (new int);
+
+    int** b = (new int*);
+    (*b) = (new int);
+
+    int*** c = (new int**);
+    (*c) = (new int*);
+    (*(*c)) = (new int);
+
+    (*a) = 7;
+    (*b) = a;
+    (*c) = &a;
+
+    print (*a);
+    print (*(*b));
+    print (*(*(*c)));
+}

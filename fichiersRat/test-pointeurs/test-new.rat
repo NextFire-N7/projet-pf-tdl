@@ -5,6 +5,7 @@ int plus (int a int b){
 main{
     int* a = (new int);
     int** b = (new int*);
+    (*b) = (new int);
     (*a) = 3;
     (*(*b)) = 7;
     print call plus ((*a) (*(*b)));
