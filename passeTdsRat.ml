@@ -71,7 +71,8 @@ module PasseTdsRat :
   (* analyse_tds_type : tds -> typ -> typ *)
   (* Param tds : la tds courante *)
   (* Param t : le type à analyser *)
-  (* "Met à plat" les types en résolvant les types nommés vers les types primitifs du langage *)
+  (* "Met à plat" les types en résolvant les types nommés vers les types primitifs du langage
+     mais ne vérifie pas les typages (pas le rôle de cette passe)*)
   (* Erreur si un type nommé n'est pas déclaré *)
   let rec analyse_tds_type tds t =
     match t with
