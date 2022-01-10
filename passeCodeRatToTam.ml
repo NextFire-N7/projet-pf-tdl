@@ -52,9 +52,9 @@ struct
           match info_ast_to_info ia with
           (* Un attribut est forcément une infovar ou infostruct *)
           | InfoVar (_, t, no, _) | InfoStruct (_, t, no, _, _) ->
-              (* La taille est celle de l'attribut final *)
+              (* La type forcé est celui de l'attribut final *)
               let nftyp = match ftyp with
-              (* size est encore à None: ia est l'attribut final *)
+              (* ftyp est encore à None: t devient le type forcé de l'attribut final *)
               | None -> Some t
               | Some _ -> ftyp
               (* On incrémente l'offset *)
