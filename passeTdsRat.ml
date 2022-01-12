@@ -31,11 +31,20 @@ module PasseTdsRat :
           | InfoStruct (_, _, _, _, lc) -> (
               (* On cherche un champ qui porte le même nom *)
               let nia_opt = List.find_opt (fun iac -> c = get_nom iac) lc in
-              match nia_opt with
+              let info = match nia_opt with
               (* On en a trouvé un, on renvoie ce champ *)
               | Some nia -> nia
               (* Sinon c'est pas bon *)
-              | None -> raise (MauvaiseUtilisationIdentifiant c))
+              | None -> raise (MauvaiseUtilisationIdentifiant c)
+              (* On vérifie qu'un symbole avec un tel nom est effectivement enregistré en tant qu'attribut *)
+              in (match chercherGlobalement tds c with 
+                | Some i -> if (match info_ast_to_info i with
+                  | InfoAttr _ -> true
+                  | _ -> false) 
+                  then info 
+                  else (raise (MauvaiseUtilisationIdentifiant c))
+                | None -> (raise (MauvaiseUtilisationIdentifiant c)))
+              )
           | _ -> raise (MauvaiseUtilisationIdentifiant c))
       (* Accès d'un accès ? On fait comme si c'était un accès sur une variable classique *)
       | Acces (_, ia) -> analyse_acces (Ident ia) c
