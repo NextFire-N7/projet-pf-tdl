@@ -27,6 +27,16 @@
 \pagebreak
 
 \section{Introduction}
+Ce projet constitue en l'extension du compilateur RAT -> TAM développé lors des scéances de Traduction des Langages.
+L'extension réalisée rajoute au compilateur les fonctionnalités suivantes:
+    - Pointeurs
+    - Addition-affectation
+    - Types nommés
+    - Enregistrement/structures
+
+Plus de détails sur les implémentation de chacunes de ces fonctionnalités peuvent être trouvés dans les sections correspondantes du rapport.
+
+Dans notre rendu du projet, tous les points demandés ont été réalisés et sont donc, a priori, fonctionnels.
 
 \section{Types}
 
@@ -35,8 +45,20 @@
 \section{Extensions du langage}
 
 \subsection{Pointeurs}
+L'implémentation des pointeurs a requis l'ajout d'un type `Pointeur of typ` dans les définition des types, `typ`.
+Ce type récursif permet donc d'avoir également de pouvoir représenter des chaines de pointeurs.
+
+De plus, plusieurs choses ont été changées pour permettre leur implémentation.
+Tout d'abord les constantes ne deviennent plus directement des entiers dans l'AST mais restent des "variables" (de type "constantes"), car cela pouvait poser problème.
+Ensuite, une nouvelle exception a étét créée pour vérifier que le déréférencement ne s'effectue que sur un pointeur (`DereferenceNonPointeur`)
+
+Pour permettre l'affectation du pointeur null, l'idée était de le considérer de type `Pointeur Undefined` et d'autoriser les affectations/déclarations entre ce type et n'importe quel autre pointeur.
 
 \subsection{+=}
+
+L'addition-affectation de pointeurs est court-circuitée (comparé à effectuer l'addition dans un premier temps puis l'affectation), pour descendre plus rapidement les chaines de pointeurs.
+Ainsi au lieu de charger la variable pointée, on garde également le dernier pointeur (qui pointe sur la variable) en mémoire, on effectue le calcul, et on réutilise le pointeur sauvegardé pour réaliser l'affectation.
+
 
 \subsection{Types nommés}
 
