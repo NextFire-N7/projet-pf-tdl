@@ -92,7 +92,10 @@ et là faire un \texttt{STOREI/LOADI} de la taille de ce qu'on pointe.
 
 \subsubsection*{Jugements de typage}
 
-TODO
+\[\frac{\sigma \vdash a : int \quad \sigma \vdash e : int}
+    {\sigma \vdash a \mathrel{+}= e : void}\]
+\[\frac{\sigma \vdash a : rat \quad \sigma \vdash e : rat}
+    {\sigma \vdash a \mathrel{+}= e : void}\]
 
 \subsubsection*{Evolution des AST}
 
@@ -114,7 +117,8 @@ le pointeur sauvegardé pour réaliser l'affectation.
 
 \subsubsection*{Jugements de typage}
 
-TODO
+\[\frac{\sigma \vdash Tid : \tau}
+    {\sigma \vdash typedef\ Tid = \tau : void, [Tid,\tau]}\]
 
 \subsubsection*{Evolution des AST}
 
