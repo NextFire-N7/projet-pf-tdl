@@ -93,9 +93,9 @@ et là faire un \texttt{STOREI/LOADI} de la taille de ce qu'on pointe.
 \subsubsection*{Jugements de typage}
 
 \[\frac{\sigma \vdash a : int \quad \sigma \vdash e : int}
-    {\sigma \vdash a \mathrel{+}= e : void}\]
+    {(a,int)::\sigma \vdash a \mathrel{+}= e : void}\]
 \[\frac{\sigma \vdash a : rat \quad \sigma \vdash e : rat}
-    {\sigma \vdash a \mathrel{+}= e : void}\]
+    {(a,rat)::\sigma \vdash a \mathrel{+}= e : void}\]
 
 \subsubsection*{Evolution des AST}
 
