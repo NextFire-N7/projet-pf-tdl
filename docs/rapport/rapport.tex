@@ -52,7 +52,7 @@ Dans notre rendu du projet, tous les points demandés ont été réalisés
 et sont à priori fonctionnels, excepté le traitement bonus des structures
 récursives.
 
-Des tests ont par ailleurs été rédigés et passent avec avec succès.
+Des tests ont par ailleurs été rédigés et passent avec succès.
 
 \section{Extensions du langage}
 
@@ -185,11 +185,12 @@ est comme si il n'y avait pas de types nommés dans le langage.
 
 \subsubsection*{Jugements de typage}
 
-\[\frac{\sigma \vdash A : Struct([...,x_k : \tau,...])}
+\[\frac{\sigma \vdash A : Struct([\dots, x_k : \tau, \dots])}
     {\sigma \vdash (A.x_k) : \tau}\]
-\[\frac{\sigma \vdash E_1:\tau_1 \quad ... \quad\sigma \vdash E_n:\tau_n}
-    {\sigma \vdash \{E_1 \space ...\space E_n \} :
-        Struct([x_1: \tau_1,\space...,\space x_n:\tau_n])}\]
+\[\frac{\sigma \vdash E_1 : \tau_1 \quad
+        \dots \quad \sigma \vdash E_n : \tau_n}
+    {\sigma \vdash \{E_1 \dots E_n \} :
+        Struct([x_1 : \tau_1, \dots, x_n : \tau_n])}\]
 
 \subsubsection*{Evolution des AST}
 
@@ -201,8 +202,8 @@ Dans le type \texttt{expression}, \texttt{StructExpr of expression list}
 représente les expressions de structures.
 
 Le type \texttt{typ} comprend un nouveau constructeur
-\texttt{Struct of (typ * string) list} représente le type enregistrement
-(liste des champs).
+\texttt{Struct of (typ * string) list} qui représente le type enregistrement
+(liste de champs).
 
 Dans le type \texttt{info}, deux nouveaux constructeurs
 \texttt{InfoStruct of string * typ * int * string * info\_ast list} et
