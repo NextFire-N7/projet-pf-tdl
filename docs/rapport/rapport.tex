@@ -134,8 +134,10 @@ le pointeur sauvegardé pour réaliser l'affectation.
 
 \subsubsection*{Jugements de typage}
 
-\[\frac{\sigma \vdash Tid : \tau}
-    {\sigma \vdash typedef\ Tid = \tau : void, [Tid,\tau]}\]
+\[\sigma \vdash typedef\ Tid = \tau : void, [Tid,\tau]\]
+
+\[\frac{\sigma \vdash Tid : \tau \quad \sigma \vdash e : \tau}
+    {(Tid,\tau)::\sigma \vdash Tid\ id = e : void, [id, \tau]}\]
 
 \subsubsection*{Evolution des AST}
 
