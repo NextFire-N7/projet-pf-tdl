@@ -23,4 +23,5 @@ let runtam ratfile = print_string (runtamcode runtamcmde ratfile)
 
 let%expect_test "exemple1" =
   runtam "../../fichiersRat/test-combi/exemple1.rat";
-  [%expect {| [13/-12][1/6]false[-221/84][1/-14] |}]
+  (* [%expect {| [13/-12][1/6]false[-221/84][1/-14] |}] *)
+  [%expect {| [-13/12][1/6]false[221/-84][1/-14] |}]

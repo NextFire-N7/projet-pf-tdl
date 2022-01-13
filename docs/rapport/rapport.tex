@@ -13,7 +13,7 @@
 \subject{Projet de Programmation Fonctionnelle\\et de Traduction des Langages}
 \title{Rapport}
 \subtitle{}
-\author{Nam VU \and Enzo PETIT}
+\author{Enzo PETIT \and Nam VU}
 \date{13 janvier 2022}
 \publishers{ENSEEIHT – 2SN-A}
 
@@ -29,40 +29,106 @@
 \section{Introduction}
 Ce projet constitue en l'extension du compilateur RAT -> TAM développé lors des scéances de Traduction des Langages.
 L'extension réalisée rajoute au compilateur les fonctionnalités suivantes:
-    - Pointeurs
-    - Addition-affectation
-    - Types nommés
-    - Enregistrement/structures
+
+\begin{itemize}
+    \item Pointeurs
+    \item Assignations d'affectation
+    \item Types nommés
+    \item Enregistrements
+\end{itemize}
 
 Plus de détails sur les implémentation de chacunes de ces fonctionnalités peuvent être trouvés dans les sections correspondantes du rapport.
 
 Dans notre rendu du projet, tous les points demandés ont été réalisés et sont donc, a priori, fonctionnels.
 
-\section{Types}
-
-\section{Jugements de typage}
-
 \section{Extensions du langage}
 
+On y détaillera toutes les modifications apportées
+
 \subsection{Pointeurs}
-L'implémentation des pointeurs a requis l'ajout d'un type `Pointeur of typ` dans les définition des types, `typ`.
-Ce type récursif permet donc d'avoir également de pouvoir représenter des chaines de pointeurs.
 
-De plus, plusieurs choses ont été changées pour permettre leur implémentation.
-Tout d'abord les constantes ne deviennent plus directement des entiers dans l'AST mais restent des "variables" (de type "constantes"), car cela pouvait poser problème.
-Ensuite, une nouvelle exception a étét créée pour vérifier que le déréférencement ne s'effectue que sur un pointeur (`DereferenceNonPointeur`)
+\subsubsection*{Jugements de typage}
 
-Pour permettre l'affectation du pointeur null, l'idée était de le considérer de type `Pointeur Undefined` et d'autoriser les affectations/déclarations entre ce type et n'importe quel autre pointeur.
+TODO
 
-\subsection{+=}
+\subsubsection*{Evolution des AST}
 
-L'addition-affectation de pointeurs est court-circuitée (comparé à effectuer l'addition dans un premier temps puis l'affectation), pour descendre plus rapidement les chaines de pointeurs.
-Ainsi au lieu de charger la variable pointée, on garde également le dernier pointeur (qui pointe sur la variable) en mémoire, on effectue le calcul, et on réutilise le pointeur sauvegardé pour réaliser l'affectation.
+Un nouveau type \texttt{affectable} représentant les affectables du
+langage est défini par \texttt{Ident of string/TDS.info\_ast} et
+\texttt{Deref of affectable} pour les déréférencements.
 
+Le type \texttt{expression} contient de plus
+\texttt{Adresse of string/TDS.info\_ast} (adresse d'une variable),
+\texttt{Null} (pointeur null) et \texttt{New of typ} (nouveau pointeur
+de type \texttt{typ}).
+
+Le type \texttt{typ} comprend un \texttt{Pointeur of typ} représentant
+les pointeurs. Etant récursif il permet d'enchaîner les pointeurs.
+
+\subsubsection*{Implémentation}
+
+Dans les différentes passes une analyse récursive des affectables
+a été rajoutée.
+
+Pour permettre l'affectation du pointeur \texttt{null},
+l'idée était de le considérer de type \texttt{Pointeur Undefined}
+et d'autoriser les affectations/déclarations entre ce type
+et n'importe quel autre pointeur.
+
+La principale difficulté dans les pointeurs fût au niveau de
+la génération de code : il faut récursivement déréférencer avec des
+\texttt{LOADI} jusqu'à arriver au "niveau de déréférencement" voulu
+et là faire un \texttt{STOREI/LOADI} de la taille de ce qu'on pointe.
+
+\subsection{Assignation d'addition}
+
+\subsubsection*{Jugements de typage}
+
+TODO
+
+\subsubsection*{Evolution des AST}
+
+TODO
+
+\subsubsection*{Implémentation}
+
+L'addition-affectation de pointeurs est court-circuitée
+(comparé à effectuer l'addition dans un premier temps
+puis l'affectation), pour descendre plus rapidement les chaines
+de pointeurs.
+
+Ainsi au lieu de charger la variable pointée,
+on garde également le dernier pointeur (qui pointe sur la variable)
+en mémoire, on effectue le calcul, et on réutilise
+le pointeur sauvegardé pour réaliser l'affectation.
 
 \subsection{Types nommés}
 
+\subsubsection*{Jugements de typage}
+
+TODO
+
+\subsubsection*{Evolution des AST}
+
+TODO
+
+\subsubsection*{Implémentation}
+
+TODO
+
 \subsection{Enregistrements}
+
+\subsubsection*{Jugements de typage}
+
+TODO
+
+\subsubsection*{Evolution des AST}
+
+TODO
+
+\subsubsection*{Implémentation}
+
+TODO
 
 \section{Conclusion}
 
