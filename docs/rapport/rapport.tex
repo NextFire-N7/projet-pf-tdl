@@ -27,8 +27,10 @@
 \pagebreak
 
 \section{Introduction}
-Ce projet constitue en l'extension du compilateur RAT -> TAM développé lors des scéances de Traduction des Langages.
-L'extension réalisée rajoute au compilateur les fonctionnalités suivantes:
+Ce projet constitue en l'extension du compilateur RAT \(\to\) TAM développé
+lors des scéances de Traduction des Langages.
+L'extension réalisée rajoute au compilateur
+les fonctionnalités suivantes:
 
 \begin{itemize}
     \item Pointeurs
@@ -37,13 +39,14 @@ L'extension réalisée rajoute au compilateur les fonctionnalités suivantes:
     \item Enregistrements
 \end{itemize}
 
-Plus de détails sur les implémentation de chacunes de ces fonctionnalités peuvent être trouvés dans les sections correspondantes du rapport.
+Plus de détails sur les implémentation de chacunes
+de ces fonctionnalités peuvent être trouvés dans les sections
+correspondantes du rapport.
 
-Dans notre rendu du projet, tous les points demandés ont été réalisés et sont donc, a priori, fonctionnels.
+Dans notre rendu du projet, tous les points demandés ont été réalisés
+et sont donc, a priori, fonctionnels.
 
 \section{Extensions du langage}
-
-On y détaillera toutes les modifications apportées
 
 \subsection{Pointeurs}
 
@@ -71,7 +74,7 @@ Dans les différentes passes une analyse récursive des affectables
 a été rajoutée.
 
 Pour permettre l'affectation du pointeur \texttt{null},
-l'idée était de le considérer de type \texttt{Pointeur Undefined}
+l'idée était de le considérer \texttt{Pointeur Undefined}
 et d'autoriser les affectations/déclarations entre ce type
 et n'importe quel autre pointeur.
 
@@ -110,11 +113,40 @@ TODO
 
 \subsubsection*{Evolution des AST}
 
-TODO
+Seul l'\texttt{AstSyntax} a été modifié :
+
+\begin{itemize}
+    \item Un type \texttt{typedef} a été déclaré avec pour seul
+          constructeur \texttt{TypedefGlobal of string * typ} et
+          représente les typedefs globaux.
+    \item Un constructeur \texttt{TypedefLocal of string * typ} a
+          été rajouté à \texttt{instruction} pour les typedefs
+          déclarés dans un bloc.
+    \item Le constructeur du type \texttt{programme} évolue en
+          \texttt{Programme of typedef list * fonction list * bloc}
+          pour inclure les typedefs globaux.
+\end{itemize}
+
+Le type \texttt{typ} s'est vu rajouter un constructeur
+\texttt{NamedTyp of string} qui représentent les types nommés.
 
 \subsubsection*{Implémentation}
 
-TODO
+Le lexer et le parser ont été adaptés pour respecter la nouvelle
+grammaire (identifiants de type, mot clé \texttt{typedef}).
+
+Pour la suite la stratégie adoptée a été de "mettre à plat" tous les
+types utilisés dans la passe TDS afin de n'avoir plus que des types
+primitifs dans les passes suivantes.
+
+Pour cela, une \texttt{analyse\_tds\_type} a été rajoutée dans
+\texttt{PasseTdsRat} et a pour but de donner un équivalent du type passé
+en entrée en type primitif.
+Il ne vérifie aucun typage, juste si un type nommé utilisé a bien été
+déclaré en amont.
+
+Suite à ça, les passes suivante n'ont pas eu à être modifiées, tout
+est comme si il n'y avait pas de types nommés dans le langage.
 
 \subsection{Enregistrements}
 
