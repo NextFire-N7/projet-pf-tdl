@@ -25,6 +25,8 @@
 
 \maketitle
 
+\pagebreak
+
 \tableofcontents
 
 \pagebreak
@@ -46,7 +48,7 @@ Les détails d'implémentation des différentes extensions sont énumérés
 dans la section suivante.
 
 Dans notre rendu du projet, tous les points demandés ont été réalisés
-et sont à priori fonctionnels.
+et sont à priori fonctionnels, excepté le traitement bonus des structures récursives.
 
 \section{Extensions du langage}
 
@@ -79,7 +81,7 @@ Dans les différentes passes une analyse récursive des affectables
 a été rajoutée.
 
 Pour permettre l'affectation du pointeur \texttt{null},
-on le type \texttt{Pointeur Undefined}
+on utilise le type \texttt{Pointeur Undefined}
 et on a autorisé les affectations/déclarations entre ce type
 et n'importe quel autre pointeur.
 
@@ -99,16 +101,27 @@ et là faire un \texttt{STOREI/LOADI} de la taille de ce qu'on pointe.
 
 \subsubsection*{Evolution des AST}
 
-TODO
+De manière similaire au traitement de l'affectation, on a tout d'abord
+ajouté une nouvelle instruction \texttt{AddAff}, permettant de représenter
+l'addition-affectation, dans les AST \texttt{Syntaxe} et \texttt{TDS}.
+
+Puis, de manière équivalent au traitement de l'addition, on gère la
+surcharge dans la passe de typage grâce à deux nouvelles instructions qui
+viennent remplacer la première en fonction du type de l'opération (sur 
+des rationnels ou sur des entier).
 
 \subsubsection*{Implémentation}
+
+Pour des variables normales, l'implémentation de l'addition-affectation 
+ne rajoute pas de point particuliers comparé aux implémentations 
+respectives de l'addition et de l'affectation.
 
 L'addition-affectation de pointeurs est court-circuitée
 (comparé à effectuer l'addition dans un premier temps
 puis l'affectation), pour descendre plus rapidement les chaines
 de pointeurs.
 
-Ainsi au lieu de charger la variable pointée,
+Au lieu de charger uniquement la variable pointée,
 on garde également le dernier pointeur (qui pointe sur la variable)
 en mémoire, on effectue le calcul, et on réutilise
 le pointeur sauvegardé pour réaliser l'affectation.
@@ -164,7 +177,10 @@ est comme si il n'y avait pas de types nommés dans le langage.
 
 \subsubsection*{Jugements de typage}
 
-TODO
+\[\frac{\sigma \vdash A : Struct([...,x_k : \tau,...])}
+    {\sigma \vdash (A.x_k) : \tau}\]
+\[\frac{\sigma \vdash E_1:\tau_1 \quad ... \quad\sigma \vdash E_n:\tau_n}
+    {\sigma \vdash \{E_1 \space ...\space E_n \} : Struct([x_1: \tau_1,\space...,\space x_n:\tau_n])}\]
 
 \subsubsection*{Evolution des AST}
 
