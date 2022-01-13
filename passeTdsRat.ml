@@ -114,32 +114,47 @@ module PasseTdsRat :
   and analyse_tds_struct tds lc =
     (* On commence par vérifier que les attributs sont soit TOUS présents, soit TOUS absents de la tds *)
     (* Tout en les ajoutant à la tds *)
-    let rec analyse_tds_attribut (presence, absence) (_, n) =
+
+    (* tous_presents note la presence de tous les attributs via un booleén *)
+    (* liste_presence est une liste qui note les symboles déjà présents rencontrés *)
+    (* tous_absents note l'absence d'un attribut avec un type 'string option'. None = true et some = false *)
+    let rec analyse_tds_attribut (tous_presents, liste_presence, tous_absents) (_, n) =
       match chercherGlobalement tds n with
       (* Si un attribut est déjà présent dans la TDS alors on note sa non-absence *)
       | Some ia -> (
           match info_ast_to_info ia with
-          | InfoAttr _ -> (presence, Some n)
-          | _ -> raise (DoubleDeclaration n))
+          | InfoAttr _ -> (tous_presents, n::liste_presence, Some n)
+          | _ -> (false, n::liste_presence, Some n))
       (* Sinon, on l'ajoute et on note sa non présence *)
       | None ->
           let info = InfoAttr (n, Undefined, 0) in
           let ia = info_to_info_ast info in
           ajouter tds n ia;
-          (false, absence)
+          (false,liste_presence, tous_absents)
     in
-    let presence, absence =
-      List.fold_left analyse_tds_attribut (true, None) lc
+    let presence, liste_presence, absence =
+      List.fold_left analyse_tds_attribut (true, [], None) lc
     in
     match (presence, absence) with
     (* Tous absents -> OK *)
     | false, None -> ()
+    (* Tous présents -> OK *)
+    | true, Some _ -> ()
     (* Tous présents et tous absents -> absurde *)
     | true, None -> failwith "impossible"
-    (* Ni présents ni absents -> Double déclaration*)
-    | false, Some n -> raise (DoubleDeclaration n)
-    (* Tous présents -> OK *)
-    | _ -> ()
+    (* Ni tous présents ni tous absents -> possible double déclaration*)
+    (* Dans ce cas, on doit vérifier que le masquage peut être effectué *)
+    | false, Some _ -> 
+      (List.iter 
+        (fun el -> match chercherLocalement tds el with
+          (* Symbole présent dans la TDS locale, masquage impossible *)
+          | Some _ -> raise (DoubleDeclaration el)
+          (* Symbole absent -> on le masque en ajoutant un nouveau à la tds *)
+          | None -> 
+            let info = InfoAttr (el, Undefined, 0) in
+            let ia = info_to_info_ast info in
+            ajouter tds el ia) 
+      liste_presence)
 
   (* analyse_tds_expression : AstSyntax.expression -> AstTds.expression *)
   (* Paramètre tds : la table des symboles courante *)

@@ -52,3 +52,7 @@ let%expect_test "exemple7-mauvaise-util" =
 (* let%expect_test "exemple8-bonus" =
   runtam "../../fichiersRat/test-struct/exemple8-bonus.rat";
   [%expect {| 123 |}] *)
+
+let%expect_test "test-masquage-par-struct" =
+  runtam "../../fichiersRat/test-struct/test-masquage-par-struct.rat";
+  [%expect {| 42 |}]

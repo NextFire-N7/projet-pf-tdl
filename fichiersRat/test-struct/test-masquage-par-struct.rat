@@ -1,0 +1,9 @@
+main {
+    int x = 5;
+    if (x < 8) {
+        struct {int x} s1 = { 42 };
+        print (s1.x);
+    } else {
+        print x;
+    }
+}
