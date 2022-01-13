@@ -25,13 +25,12 @@
 
 \maketitle
 
-\pagebreak
-
 \tableofcontents
 
 \pagebreak
 
 \section{Introduction}
+
 Ce projet cherche à étendre les capacités du compilateur RAT \(\to\)
 TAM développé lors des séances de TP/TD de Traduction des Langages.
 Les extensions réalisées rajoutent au compilateur
@@ -48,7 +47,10 @@ Les détails d'implémentation des différentes extensions sont énumérés
 dans la section suivante.
 
 Dans notre rendu du projet, tous les points demandés ont été réalisés
-et sont à priori fonctionnels, excepté le traitement bonus des structures récursives.
+et sont à priori fonctionnels, excepté le traitement bonus des structures
+récursives.
+
+Des tests ont par ailleurs été rédigés et passent avec avec succès.
 
 \section{Extensions du langage}
 
@@ -87,8 +89,9 @@ et n'importe quel autre pointeur.
 
 La principale difficulté dans les pointeurs fût au niveau de
 la génération de code : il faut récursivement déréférencer avec des
-\texttt{LOADI} jusqu'à arriver au "niveau de déréférencement" voulu
-et là faire un \texttt{STOREI/LOADI} de la taille de ce qu'on pointe.
+\texttt{LOADI} jusqu'à arriver au \textit{niveau de déréférencement}
+voulu et là faire un \texttt{STOREI/LOADI} de la taille de ce
+qu'on pointe.
 
 \subsection{Opérateur d'assignation d'addition}
 
@@ -102,18 +105,19 @@ et là faire un \texttt{STOREI/LOADI} de la taille de ce qu'on pointe.
 \subsubsection*{Evolution des AST}
 
 De manière similaire au traitement de l'affectation, on a tout d'abord
-ajouté une nouvelle instruction \texttt{AddAff}, permettant de représenter
-l'addition-affectation, dans les AST \texttt{Syntaxe} et \texttt{TDS}.
+ajouté une nouvelle instruction \texttt{AddAff}, permettant de
+représenter l'addition-affectation, dans les AST \texttt{Syntaxe} et
+\texttt{TDS}.
 
 Puis, de manière équivalent au traitement de l'addition, on gère la
-surcharge dans la passe de typage grâce à deux nouvelles instructions qui
-viennent remplacer la première en fonction du type de l'opération (sur 
-des rationnels ou sur des entier).
+surcharge dans la passe de typage grâce à deux nouvelles instructions
+qui viennent remplacer la première en fonction du type de l'opération
+(sur des rationnels ou sur des entiers).
 
 \subsubsection*{Implémentation}
 
-Pour des variables normales, l'implémentation de l'addition-affectation 
-ne rajoute pas de point particuliers comparé aux implémentations 
+Pour des variables normales, l'implémentation de l'addition-affectation
+ne rajoute pas de point particuliers comparé aux implémentations
 respectives de l'addition et de l'affectation.
 
 L'addition-affectation de pointeurs est court-circuitée
@@ -180,7 +184,8 @@ est comme si il n'y avait pas de types nommés dans le langage.
 \[\frac{\sigma \vdash A : Struct([...,x_k : \tau,...])}
     {\sigma \vdash (A.x_k) : \tau}\]
 \[\frac{\sigma \vdash E_1:\tau_1 \quad ... \quad\sigma \vdash E_n:\tau_n}
-    {\sigma \vdash \{E_1 \space ...\space E_n \} : Struct([x_1: \tau_1,\space...,\space x_n:\tau_n])}\]
+    {\sigma \vdash \{E_1 \space ...\space E_n \} :
+        Struct([x_1: \tau_1,\space...,\space x_n:\tau_n])}\]
 
 \subsubsection*{Evolution des AST}
 
@@ -226,5 +231,29 @@ y forcer un \textit{offset} et un \textit{type} lors des accès
 à l'attribut d'une structure.
 
 \section{Conclusion}
+
+La difficulté du projet résidait surtout dans la détermination des
+bonnes structures de données et le choix des traitements à faire
+lors des différentes passes pour les différentes extensions.
+La programmation OCaml n'était pas réellement un obstacle
+sur ce projet, les itérateurs et le filtrage aidant beaucoup au
+final.
+
+Le déboggage n'était néanmoins pas très aisé : pas de réelle possibilité
+de lancer un test particuler avec des breakpoints ou de logger des
+valeurs sur la sortie standard facilement.
+
+Concernant les enregistrements, les contraintes sur les bonnes
+définitions des structures, censées \textit{simplifier les analyses},
+nous ont parues assez compliqué à vérifier en pratique, du moins dans
+notre version du compilateur\dots
+
+Il n'en reste pas moins qu'un projet qu'on a trouvé globalement
+enrichissant et assez agréable à réaliser !\\
+
+\textit{PS: Nous avons trouvé que l'extension
+    \href{https://marketplace.visualstudio.com/items?itemName=ocamllabs.ocaml-platform}{OCaml Platform}
+    pour Visual Studio Code s'averrait bien plus fonctionnelle que
+    celle conseillée en TP\dots}
 
 \end{document}
