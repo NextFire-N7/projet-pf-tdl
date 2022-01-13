@@ -30,24 +30,23 @@
 \pagebreak
 
 \section{Introduction}
-Ce projet constitue en l'extension du compilateur RAT \(\to\)
-TAM développé lors des scéances de Traduction des Langages.
-L'extension réalisée rajoute au compilateur
+Ce projet cherche à étendre les capacités du compilateur RAT \(\to\)
+TAM développé lors des séances de TP/TD de Traduction des Langages.
+Les extensions réalisées rajoutent au compilateur
 les fonctionnalités suivantes:
 
 \begin{itemize}
     \item Pointeurs
-    \item Assignations d'affectation
+    \item Opérateur d'assignation d'addition
     \item Types nommés
     \item Enregistrements
 \end{itemize}
 
-Plus de détails sur les implémentation de chacunes
-de ces fonctionnalités peuvent être trouvés dans les sections
-correspondantes du rapport.
+Les détails d'implémentation des différentes extensions sont énumérés
+dans la section suivante.
 
 Dans notre rendu du projet, tous les points demandés ont été réalisés
-et sont donc, a priori, fonctionnels.
+et sont à priori fonctionnels.
 
 \section{Extensions du langage}
 
@@ -77,8 +76,8 @@ Dans les différentes passes une analyse récursive des affectables
 a été rajoutée.
 
 Pour permettre l'affectation du pointeur \texttt{null},
-l'idée était de le considérer \texttt{Pointeur Undefined}
-et d'autoriser les affectations/déclarations entre ce type
+on le type \texttt{Pointeur Undefined}
+et on a autorisé les affectations/déclarations entre ce type
 et n'importe quel autre pointeur.
 
 La principale difficulté dans les pointeurs fût au niveau de
@@ -86,7 +85,7 @@ la génération de code : il faut récursivement déréférencer avec des
 \texttt{LOADI} jusqu'à arriver au "niveau de déréférencement" voulu
 et là faire un \texttt{STOREI/LOADI} de la taille de ce qu'on pointe.
 
-\subsection{Assignation d'addition}
+\subsection{Opérateur d'assignation d'addition}
 
 \subsubsection*{Jugements de typage}
 
@@ -124,14 +123,14 @@ Seul l'\texttt{AstSyntax} a été modifié :
           représente les typedefs globaux.
     \item Un constructeur \texttt{TypedefLocal of string * typ} a
           été rajouté à \texttt{instruction} pour les typedefs
-          déclarés dans un bloc.
+          déclarés dans un bloc (locaux).
     \item Le constructeur du type \texttt{programme} évolue en
           \texttt{Programme of typedef list * fonction list * bloc}
           pour inclure les typedefs globaux.
 \end{itemize}
 
 Le type \texttt{typ} s'est vu rajouter un constructeur
-\texttt{NamedTyp of string} qui représentent les types nommés.
+\texttt{NamedTyp of string} qui représente les types nommés.
 
 \texttt{InfoTyp of string * typ} a été rajouté pour enregistrer
 les types nommés dans la TDS.
@@ -141,7 +140,7 @@ les types nommés dans la TDS.
 Le lexer et le parser ont été adaptés pour respecter la nouvelle
 grammaire (identifiants de type, mot clé \texttt{typedef}).
 
-Pour la suite la stratégie adoptée a été de \textit{mettre à plat}
+Pour la suite, la stratégie adoptée a été de \textit{mettre à plat}
 tous les types utilisés dans la passe TDS afin de n'avoir plus que
 des types primitifs dans les passes suivantes.
 
@@ -164,7 +163,7 @@ TODO
 
 Le type \texttt{affectable} est amendé d'un nouveau constructeur
 \texttt{Acces of affectable * string/TDS.info\_ast} représentant les
-accès à un champs d'un enregistrement.
+accès à un champ d'un enregistrement.
 
 Dans le type \texttt{expression}, \texttt{StructExpr of expression list}
 représente les expressions de structures.
@@ -176,13 +175,13 @@ Le type \texttt{typ} comprend un nouveau constructeur
 Dans le type \texttt{info}, deux nouveaux constructeurs
 \texttt{InfoStruct of string * typ * int * string * info\_ast list} et
 \texttt{InfoAttr of string * typ * int}
-ont été rajouter pour désigner respectivement une structure et un champ.
+ont été rajoutés pour désigner respectivement une structure et un champ.
 
 \subsubsection*{Implémentation}
 
 Sans rentrer dans les détails du code, dans la passe TDS on a rajouté
-une nouvelle fonction \texttt{analyse\_tds\_struct} utilisée dans
-\texttt{analyse\_tds\_type} défini précédemment qui se charge de
+une nouvelle fonction \texttt{analyse\_tds\_struct}, utilisée dans
+\texttt{analyse\_tds\_type} définie précédemment, qui se charge de
 vérifier si l'utilisation de la structure est correcte (pas de double
 déclaration, etc.). On y a aussi rajouté une fonction
 \texttt{creer\_info\_ast} qui renvoie une \texttt{info\_ast}
