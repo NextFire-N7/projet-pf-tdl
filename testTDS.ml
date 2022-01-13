@@ -1,4 +1,4 @@
-open Compilateur
+(* open Compilateur
 open Exceptions
 
 exception ErreurNonDetectee;;
@@ -9,7 +9,7 @@ exception ErreurNonDetectee;;
 (* ------------------------------ *)
 
 
-(* let%test_unit "testAffectation1" = 
+let%test_unit "testAffectation1" = 
   let _ = compiler "../../fichiersRat/src-rat-tds-test/testAffectation1.rat" in ()
 
 let%test_unit "testAffectation2"= 

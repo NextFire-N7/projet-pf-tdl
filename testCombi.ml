@@ -1,5 +1,4 @@
 open Compilateur
-open Exceptions
 
 (* Changer le chemin d'accès du jar. *)
 let runtamcmde = "java -jar ../../runtam.jar"
