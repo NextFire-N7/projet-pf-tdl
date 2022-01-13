@@ -10,7 +10,10 @@
         \includegraphics[width=5cm]{n7.png}
     \end{center}
 }
-\subject{Projet de Programmation Fonctionnelle\\et de Traduction des Langages}
+\subject{
+    Projet de Programmation Fonctionnelle\\
+    et de Traduction des Langages
+}
 \title{Rapport}
 \subtitle{}
 \author{Enzo PETIT \and Nam VU}
@@ -27,8 +30,8 @@
 \pagebreak
 
 \section{Introduction}
-Ce projet constitue en l'extension du compilateur RAT \(\to\) TAM développé
-lors des scéances de Traduction des Langages.
+Ce projet constitue en l'extension du compilateur RAT \(\to\)
+TAM développé lors des scéances de Traduction des Langages.
 L'extension réalisée rajoute au compilateur
 les fonctionnalités suivantes:
 
@@ -130,18 +133,21 @@ Seul l'\texttt{AstSyntax} a été modifié :
 Le type \texttt{typ} s'est vu rajouter un constructeur
 \texttt{NamedTyp of string} qui représentent les types nommés.
 
+\texttt{InfoTyp of string * typ} a été rajouté pour enregistrer
+les types nommés dans la TDS.
+
 \subsubsection*{Implémentation}
 
 Le lexer et le parser ont été adaptés pour respecter la nouvelle
 grammaire (identifiants de type, mot clé \texttt{typedef}).
 
-Pour la suite la stratégie adoptée a été de "mettre à plat" tous les
-types utilisés dans la passe TDS afin de n'avoir plus que des types
-primitifs dans les passes suivantes.
+Pour la suite la stratégie adoptée a été de \textit{mettre à plat}
+tous les types utilisés dans la passe TDS afin de n'avoir plus que
+des types primitifs dans les passes suivantes.
 
 Pour cela, une \texttt{analyse\_tds\_type} a été rajoutée dans
-\texttt{PasseTdsRat} et a pour but de donner un équivalent du type passé
-en entrée en type primitif.
+\texttt{PasseTdsRat} et a pour but de donner un équivalent du type
+passé en entrée en type primitif.
 Il ne vérifie aucun typage, juste si un type nommé utilisé a bien été
 déclaré en amont.
 
@@ -156,11 +162,46 @@ TODO
 
 \subsubsection*{Evolution des AST}
 
-TODO
+Le type \texttt{affectable} est amendé d'un nouveau constructeur
+\texttt{Acces of affectable * string/TDS.info\_ast} représentant les
+accès à un champs d'un enregistrement.
+
+Dans le type \texttt{expression}, \texttt{StructExpr of expression list}
+représente les expressions de structures.
+
+Le type \texttt{typ} comprend un nouveau constructeur
+\texttt{Struct of (typ * string) list} représente le type enregistrement
+(liste des champs).
+
+Dans le type \texttt{info}, deux nouveaux constructeurs
+\texttt{InfoStruct of string * typ * int * string * info\_ast list} et
+\texttt{InfoAttr of string * typ * int}
+ont été rajouter pour désigner respectivement une structure et un champ.
 
 \subsubsection*{Implémentation}
 
-TODO
+Sans rentrer dans les détails du code, dans la passe TDS on a rajouté
+une nouvelle fonction \texttt{analyse\_tds\_struct} utilisée dans
+\texttt{analyse\_tds\_type} défini précédemment qui se charge de
+vérifier si l'utilisation de la structure est correcte (pas de double
+déclaration, etc.). On y a aussi rajouté une fonction
+\texttt{creer\_info\_ast} qui renvoie une \texttt{info\_ast}
+d'\texttt{InfoVar} ou d'\texttt{InfoStruct} le cas échéant.
+\texttt{analyse\_tds\_affectable} a aussi été modifié pour vérifier
+que les accès sur les variables sont corrects (fonction auxiliaire
+\texttt{analyse\_acces}).
+
+Pour la passe type, on a dû adapter \texttt{est\_compatible}
+pour les structures.
+
+Dans la passe de placement, \texttt{analyse\_placement\_struct} se
+charge de placer les attributs des structures, relativement à la base
+de la structure.
+
+Enfin, dans la passe de génération de code,
+\texttt{generer\_code\_affectable} a été modifié afin de pouvoir
+y forcer un \textit{offset} et un \textit{type} lors des accès
+à l'attribut d'une structure.
 
 \section{Conclusion}
 

@@ -24,7 +24,7 @@ let rec est_compatible t1 t2 =
   | Rat, Rat -> true 
   | Pointeur Undefined, Pointeur _ | Pointeur _, Pointeur Undefined -> true
   | Pointeur a, Pointeur b -> est_compatible a b
-  | Struct ts1, Struct ts2 -> (List.length ts1 = List.length ts2) && (List.for_all2 (fun (t1, _) (t2,_) -> est_compatible t1 t2) ts1 ts2)
+  | Struct ts1, Struct ts2 -> (List.length ts1 = List.length ts2) && (List.for_all2 (fun (t1,_) (t2,_) -> est_compatible t1 t2) ts1 ts2)
   | _ -> false 
 
 let%test _ = est_compatible Bool Bool

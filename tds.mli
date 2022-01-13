@@ -12,8 +12,10 @@ type info =
   (* types nommés *)
   | InfoTyp of string * typ
   (* Struct *)
-  | InfoAttr of string * typ * int
+  (* struct: InfoVar + liste des champs de la structure  *)
   | InfoStruct of string * typ * int * string * info_ast list
+  (* champ: nom - type - déplacement par rapport à la base de la structure parente *)
+  | InfoAttr of string * typ * int
   
 (* Données stockées dans la tds et dans les AST : pointeur sur une information *)
 and info_ast 

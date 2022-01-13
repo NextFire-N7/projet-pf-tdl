@@ -7,8 +7,8 @@ type info =
   | InfoVar of string * typ * int * string
   | InfoFun of string * typ * typ list
   | InfoTyp of string * typ
-  | InfoAttr of string * typ * int
   | InfoStruct of string * typ * int * string * info_ast list
+  | InfoAttr of string * typ * int
 
 (* Données stockées dans la tds  et dans les AST : pointeur sur une information *)
 and info_ast = info ref  
