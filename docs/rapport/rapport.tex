@@ -54,7 +54,10 @@ et sont à priori fonctionnels.
 
 \subsubsection*{Jugements de typage}
 
-TODO
+\[\sigma \vdash null : Pointeur(Undefined)\]
+\[\frac{\sigma \vdash T : \tau}{\sigma \vdash new\ T : Pointeur(\tau)}\]
+\[\frac{\sigma \vdash id : \tau}{\sigma \vdash \&id : Pointeur(\tau)}\]
+\[\frac{\sigma \vdash a : Pointeur(\tau)}{\sigma \vdash *a : \tau}\]
 
 \subsubsection*{Evolution des AST}
 
